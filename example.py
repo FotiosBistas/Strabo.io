@@ -11,7 +11,7 @@ json_object = {
         },
         {
             'non_translated': "O Kwstas einai kata tou vim. Giati re kWsta eisai kata tou vim?",
-            'translated': "Ο Κώστας είναι κατά του vim. Γιατί ρε Κώστα είσαι κατά του Vim;"
+            'translated': "Ο Κώστας είναι κατά του vim. Γιατί ρε Κώστα είσαι κατά του Vim?"
         }   
     ]
 }
