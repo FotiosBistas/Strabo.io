@@ -12,9 +12,18 @@ json_object = {
         {
             'non_translated': "O Kwstas einai kata tou vim. Giati re kWsta eisai kata tou vim?",
             'translated': "Ο Κώστας είναι κατά του vim. Γιατί ρε Κώστα είσαι κατά του Vim?"
-        }   
+        },
     ]
 }
+
+
+for i in range(200): 
+    json_object["batch"].append(
+        {
+            'non_translated': "O Kwstas einai kata tou vim. Giati re kWsta eisai kata tou vim?Re kwsta se parakalw mhn eisai kata tou vim giati to vim einai polu kalo.",
+            'translated': "Ο Κώστας είναι κατά του vim. Γιατί ρε Κώστα είσαι κατά του Vim?Ρε Κώστα σε παρακαλώ μην είσαι κατά του vim γιατί το vim είναι πολύ καλό."
+        }
+    )
 # set the encoding of the request data to UTF-8
 headers = {'Content-Type': 'application/json; charset=utf-8'}
 

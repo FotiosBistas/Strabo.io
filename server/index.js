@@ -1,9 +1,8 @@
 "use strict"
-const { time } = require('console');
 const express = require('express')
 const https = require('https')
 const app = express();
-
+const mongoDBinteractions = require('./mongo_db_api/mongo.js'); 
 
 function log(text){
     let time = new Date(); 
@@ -19,10 +18,12 @@ let result = null
 app.use(express.static('public'));
 
 // parse url-encoded content from body
-app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+
 
 // parse application/json content from body
-app.use(express.json()) ;
+app.use(express.json( {limit:'10mb'})) ;
 
 
 if(!result){
@@ -75,6 +76,7 @@ app.post('/Batch', (request,result) =>{
  * @param {*} batch 
  */
 function processBatch(batch){
+    let database_structs = [] 
     batch.forEach(translation_struct => {
         //concatenate the two string to be inserted into the database
         //and processed by the tokenizers 
@@ -100,8 +102,11 @@ function processBatch(batch){
             "non_translated": translation_struct.non_translated
         }
 
+        database_structs.push(database_struct)
         log(JSON.stringify(database_struct))
     })
+    log("Rough size of object is: " + roughSizeOfObject(database_structs) + " bytes");
+    mongoDBinteractions.addStructToDatabase(database_structs);
 }
 
 /**
@@ -135,3 +140,36 @@ function wordTokenizer(translation_struct) {
 }
 
 
+function roughSizeOfObject( object ) {
+
+    var objectList = [];
+    var stack = [ object ];
+    var bytes = 0;
+
+    while ( stack.length ) {
+        var value = stack.pop();
+
+        if ( typeof value === 'boolean' ) {
+            bytes += 4;
+        }
+        else if ( typeof value === 'string' ) {
+            bytes += value.length * 2;
+        }
+        else if ( typeof value === 'number' ) {
+            bytes += 8;
+        }
+        else if
+        (
+            typeof value === 'object'
+            && objectList.indexOf( value ) === -1
+        )
+        {
+            objectList.push( value );
+
+            for( var i in value ) {
+                stack.push( value[ i ] );
+            }
+        }
+    }
+    return bytes;
+}
