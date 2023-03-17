@@ -1,6 +1,6 @@
 "use strict"
 const express = require('express')
-const https = require('https')
+const https = require('https');
 const app = express();
 const mongoDBinteractions = require('./mongo_db_api/mongo.js'); 
 
@@ -8,8 +8,8 @@ function log(text){
     let time = new Date(); 
     console.log("[" + time.toLocaleTimeString() + "] " + " " + text)
 }
-let result = null 
-//result = https.createServer(app).listen(3000, () =>{
+let server = null 
+//server = https.createServer(app).listen(3000, () =>{
 //    log("Listening on port 3000 https server")
 //})
 
@@ -26,9 +26,10 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(express.json( {limit:'10mb'})) ;
 
 
-if(!result){
+if(!server){
     log("Could not create https server")
-    app.listen(3000, () =>{
+    server = app.listen(3000, async () =>{
+        await mongoDBinteractions.connectToDatabase(); 
         log("Listening on port 3000 http server")
     })
 }
@@ -59,9 +60,14 @@ app.post('/Batch', (request,result) =>{
 
     // do something with the data
     log({uid,batch});
-    processBatch(batch);
-    // send a response
-    result.status(200).send('Received batch data');
+    try{
+        processBatch(batch);
+        // send a response
+        result.status(200).send('Received batch data');
+    }catch(err){
+        result.status(500).send("Couldn't process request")
+    }
+    
 })
 
 /**
@@ -103,10 +109,14 @@ function processBatch(batch){
         }
 
         database_structs.push(database_struct)
-        log(JSON.stringify(database_struct))
+        //log(JSON.stringify(database_struct))
     })
     log("Rough size of object is: " + roughSizeOfObject(database_structs) + " bytes");
-    mongoDBinteractions.addStructToDatabase(database_structs);
+    try{
+        mongoDBinteractions.addStructToDatabase(database_structs);
+    }catch(err){
+        throw err; 
+    }
 }
 
 /**
@@ -173,3 +183,13 @@ function roughSizeOfObject( object ) {
     }
     return bytes;
 }
+
+
+process.on('SIGINT',async () => {
+    log('Received SIGINT signal, shutting down server...');
+    await mongoDBinteractions.closeConnection(); 
+    server.close(() => {
+      log('Server shut down gracefully');
+      process.exit(0);
+    });
+});
