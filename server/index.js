@@ -3,7 +3,7 @@ const express = require('express')
 const https = require('https');
 const app = express();
 const mongoDBinteractions = require('./mongo_db_api/mongo.js'); 
-
+const dictionary_interactions = require('./dictionary.js');
 function log(text){
     let time = new Date(); 
     console.log("[" + time.toLocaleTimeString() + "] " + " " + text)
@@ -42,7 +42,10 @@ app.get('/Model', (req,res) => {
 })
 
 
-
+/**
+ * TODO: SESSION ID 
+ * 
+ */
 app.post('/Login', (request, result) => {
 
 })
@@ -62,9 +65,11 @@ app.post('/Batch', (request,result) =>{
     log({uid,batch});
     try{
         processBatch(batch);
+        log("Processed batch successfully")
         // send a response
         result.status(200).send('Received batch data');
     }catch(err){
+        log("Error while processing batch: " + err);
         result.status(500).send("Couldn't process request")
     }
     
@@ -96,6 +101,7 @@ function processBatch(batch){
 
         let timestamp = new Date();
         //this will be inserted into the database
+        //TODO INDEXING 
         let database_struct = {
             "translated_words": translated_words, 
             "translated_sentences": translated_sentences,
@@ -114,6 +120,12 @@ function processBatch(batch){
     log("Rough size of object is: " + roughSizeOfObject(database_structs) + " bytes");
     try{
         mongoDBinteractions.addStructToDatabase(database_structs);
+        database_structs.forEach(struct => {
+            
+            let bitmap = dictionary_interactions.createBitmaps(struct.translated_words);
+            dictionary_interactions.insertLetterandWordInDictionary(struct.translated_words); 
+        });
+        log(JSON.stringify(greek_dictionary))
     }catch(err){
         throw err; 
     }
@@ -126,7 +138,7 @@ function processBatch(batch){
  * @returns 
  */
 function sentenceTokenizer( translation_struct){
-    let result = translation_struct.match( /[^\.!\?]+[\.!\?]+/g );
+    let result = translation_struct.match( /[^\.;!\?]+[\.;!\?]+/g );
     return result;
 }
 
