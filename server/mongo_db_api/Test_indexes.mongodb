@@ -1,0 +1,6 @@
+// Make sure you are connected to enable completions and to be able to run a playground.
+// Use Ctrl+Space inside a snippet or a string literal to trigger completions.
+
+use("UserData")
+db.Translated_and_non.find({ timestamp: { $lt: "2023-03-19"} });
+

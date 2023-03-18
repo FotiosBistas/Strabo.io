@@ -99,7 +99,10 @@ function processBatch(batch){
         let non_translated_words = wordTokenizer(translation_struct.non_translated);
         let non_translated_sentences = sentenceTokenizer(translation_struct.non_translated);
 
-        let timestamp = new Date();
+        let timestamp = new Date().toISOString().split('T')[0];
+       // let date = new Date();
+       // date.setDate(date.getDate() + 1);  
+       // let timestamp = date.toISOString().split('T')[0];
         //this will be inserted into the database
         //TODO INDEXING 
         let database_struct = {
@@ -122,7 +125,6 @@ function processBatch(batch){
         mongoDBinteractions.addStructToDatabase(database_structs);
         database_structs.forEach(struct => {
             
-            let bitmap = dictionary_interactions.createBitmaps(struct.translated_words);
             dictionary_interactions.insertLetterandWordInDictionary(struct.translated_words); 
         });
         log(JSON.stringify(greek_dictionary))

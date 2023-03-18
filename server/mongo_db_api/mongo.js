@@ -37,10 +37,20 @@ module.exports = {
         }
     },
 
+    addBitmapToDatabase: async function(bitmaps){
+        
+        try{                    
+            const result = await client.db("UserData").collection("Bitmaps").insertMany(bitmaps); 
+            log("Documents inserted: " + result.insertedCount);
+        } catch (err) {
+            log("Documents were not inserted into the database error: " + err);
+        } 
+    },
+
     addStructToDatabase: async function(database_structs){
         try {
 
-            const result = await client.db("UserData").collection("Translated-and-non").insertMany(database_structs);
+            const result = await client.db("UserData").collection("Translated_and_non").insertMany(database_structs);
             log("Documents inserted: " + result.insertedCount);
         } catch (err) {
             log("Documents were not inserted into the database error: " + err);
