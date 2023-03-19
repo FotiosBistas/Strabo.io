@@ -2,5 +2,7 @@
 // Use Ctrl+Space inside a snippet or a string literal to trigger completions.
 
 use("UserData")
-db.Translated_and_non.find({ timestamp: { $lt: "2023-03-19"} });
+db.Translated_and_non.find({ timestamp: { $lt: "2023-03-19"} })
+.hint({timestamp:1}).explain("executionStats");
+
 

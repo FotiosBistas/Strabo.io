@@ -21,6 +21,10 @@ module.exports = {
         return word_bitmap;  
     },
 
+    /**
+     * Inserts a greek word inside the dictionary. 
+     * @param {*} words 
+     */
     insertLetterandWordInDictionary: function(words){
         words.forEach(word => {
             greek_dictionary.add(word); 
