@@ -52,16 +52,21 @@ module.exports = {
     },
 
 
-
     /**
      * Retrieves data based on the date given as a parameter. 
      * This will probably be used to train the model.  
      * @param {*} date 
      */
     retrieveDataBasedOnDate: async function(date){
-        const result = await client.db('UserData').collection('Translated_and_non').find({ _id: { $lt: this.objectIdWithTimestamp(date) } }).explain();
-        //TODO PROCESS RESULT 
-        log(JSON.stringify(result))
+        try{
+            const cursor = await client.db('UserData').collection('Translated_and_non').find({ _id: { $lte: this.objectIdWithTimestamp(date) } });
+            const documents = await cursor.toArray(); 
+            return documents;
+        }catch(err){
+            log("Error: " + err + "occured while trying to retrieve documents from database");
+            return err; 
+        }
+
     },
 
 

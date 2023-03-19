@@ -54,8 +54,7 @@ module.exports = {
             };
 
             let encrypted_struct = this.encryptData(database_struct);
-            let decrypted_struct = this.decryptData(encrypted_struct);
-            database_structs.push(database_struct);
+            database_structs.push(encrypted_struct);
         })
         log("Rough size of object is: " + this.roughSizeOfObject(database_structs) + " bytes");
         return database_structs;

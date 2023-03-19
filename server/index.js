@@ -61,7 +61,7 @@ app.post('/Login', (request, result) => {
  * Receiving batches of translated and non-translated data 
  * along with user ID. 
  */
-app.post('/Batch', (request,result) =>{
+app.post('/Batch', async (request,result) =>{
     log("Received batch in http server"); 
     const {uid,batch} = request.body;
  
@@ -71,6 +71,7 @@ app.post('/Batch', (request,result) =>{
     log({uid,batch});
     try{
         let database_structs = batch_utilities.processBatch(batch);
+        mongoDBinteractions.addStructToDatabase(database_structs);
         log("Processed batch successfully")
         // send a response
         result.status(200).send('Received batch data');
