@@ -139,10 +139,30 @@ module.exports = {
             let bytes = CryptoJS.AES.decrypt(decryptable_string, private_key);
             let originalField = bytes.toString(CryptoJS.enc.Utf8);
         
-            decrypted_struct[key] = originalField; 
+            decrypted_struct[key] = this.turnDecryptedStringIntoArray(key,originalField); 
         }
         
         return decrypted_struct; 
+    },
+
+
+    /**
+     * Used to create human readable arrays from the database struct. 
+     * These were initially received as arrays from the batches.
+     * @param {*} originalField 
+     */
+    turnDecryptedStringIntoArray(key, originalField){
+        initial_arrays_turned_encrypted_strings = [
+            'non_translated_sentences',
+            'translated_sentences',
+            'non_translated_words',
+            'translated_words'
+        ];
+        if(initial_arrays_turned_encrypted_strings.includes(key)){
+           let initial_array =originalField.split(',');
+            return initial_array; 
+        } 
+        return originalField; 
     },
 
     /**
