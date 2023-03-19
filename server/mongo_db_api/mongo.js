@@ -17,6 +17,7 @@ const options = {
 // Create a new MongoClient instance
 const client = new MongoClient(uri, options);
 
+
 module.exports = {
 
     connectToDatabase: async function(){

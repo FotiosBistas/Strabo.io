@@ -4,7 +4,9 @@ const https = require('https');
 const app = express();
 const mongoDBinteractions = require('./mongo_db_api/mongo.js'); 
 const dictionary_interactions = require('./utils/dictionary.js');
-const batch_utilities = require('./utils/batch_processing.js')
+const batch_utilities = require('./utils/batch_processing.js'); 
+const { v4: uuidv4 } = require('uuid'); 
+
 function log(text){
     let time = new Date(); 
     console.log("[" + time.toLocaleTimeString() + "] " + " " + text)
@@ -44,17 +46,20 @@ app.get('/Model', (req,res) => {
 
 
 /**
- * TODO: SESSION ID 
- * 
+ * When a user starts using the dictionary 
+ * an identifier for the session (TODO I don't know what session means yet)
+ * is assigned to them  
  */
 app.post('/Login', (request, result) => {
-
+    let userID = {sessionId: uuidv4()};
+    log(userID);
 })
 
 
 
 /**
  * Receiving batches of translated and non-translated data 
+ * along with user ID. 
  */
 app.post('/Batch', (request,result) =>{
     log("Received batch in http server"); 

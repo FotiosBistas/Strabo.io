@@ -1,4 +1,9 @@
 
+const CryptoJS = require('crypto-js');
+
+
+const private_key = "something something"//TODO 
+
 
 function log(text){
     let time = new Date(); 
@@ -48,6 +53,8 @@ module.exports = {
                 "non_translated": translation_struct.non_translated
             };
 
+            let encrypted_struct = this.encryptData(database_struct);
+            let decrypted_struct = this.decryptData(encrypted_struct);
             database_structs.push(database_struct);
         })
         log("Rough size of object is: " + this.roughSizeOfObject(database_structs) + " bytes");
@@ -64,7 +71,79 @@ module.exports = {
         return result;
     },
 
+    /**
+     * Encrypts the data before sending them over to the database 
+     * @param {*} database_struct a finalized structure for the data that 
+     * will be inserted into the database  
+     */
+    encryptData(database_struct){
+        //value is either timestamp, full text data of batch, or array 
+        
+        let encrypted_struct = {}; 
 
+
+        non_needed_encryption_fields = ['timestamp', 'number_of_sentences', 'number_of_words'];  
+
+        for(const [key,value] of Object.entries(database_struct)){
+            
+            log(`Key: ${key}: value: ${value}`);
+
+            if(non_needed_encryption_fields.includes(key)){
+                encrypted_struct[key] = value;
+                continue;
+            }
+
+            let encryptable_string = value; 
+
+            if(Array.isArray(value)){
+                encryptable_string = value.toString(); 
+            }
+
+            log("Encryptable string is: " + encryptable_string);
+
+            let cipher = CryptoJS.AES.encrypt(encryptable_string, private_key).toString();
+        
+            encrypted_struct[key] = cipher; 
+        }
+        
+        return encrypted_struct; 
+    },
+
+    /**
+     * After retrieving the data from the database retrieve them
+     * using the private key. 
+     * @param {*} encrypted_struct structure received from database.  
+     */
+    decryptData(encrypted_struct){
+
+        //value is either timestamp, full text data of batch, or array 
+        
+        let decrypted_struct = {}; 
+
+
+        non_needed_decryption_fields = ['timestamp', 'number_of_sentences', 'number_of_words'];  
+
+        for(const [key,value] of Object.entries(encrypted_struct)){
+            
+            log(`Key: ${key}: value: ${value}`);
+
+            if(non_needed_decryption_fields.includes(key)){
+                decrypted_struct[key] = value;
+                continue;
+            }
+
+            let decryptable_string = value; 
+
+            log("Decryptable string is: " + decryptable_string);
+
+            let bytes = CryptoJS.AES.decrypt(decryptable_string, private_key);
+            let originalField = bytes.toString(CryptoJS.enc.Utf8);
+        
+            decrypted_struct[key] = originalField; 
+        }
+        
+        return decrypted_struct; 
+    },
 
     /**
      * Receives the  translation_struct input and tokenizes the words. 
