@@ -6,6 +6,7 @@ const mongoDBinteractions = require('./mongo_db_api/mongo.js');
 const dictionary_interactions = require('./utils/dictionary.js');
 const batch_utilities = require('./utils/batch_processing.js'); 
 const { v4: uuidv4 } = require('uuid'); 
+const batch_processing = require('./utils/batch_processing.js');
 
 function log(text){
     let time = new Date(); 
@@ -72,6 +73,9 @@ app.post('/Batch', async (request,result) =>{
     try{
         let database_structs = batch_utilities.processBatch(batch);
         mongoDBinteractions.addStructToDatabase(database_structs);
+        for(let i = 0; i < database_structs.length; i++){
+            batch_processing.decryptData(database_structs[i]);
+        }
         log("Processed batch successfully")
         // send a response
         result.status(200).send('Received batch data');

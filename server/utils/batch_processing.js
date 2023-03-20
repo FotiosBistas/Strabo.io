@@ -1,9 +1,12 @@
 
-const CryptoJS = require('crypto-js');
+const crypto = require('crypto');
 
 
-const private_key = "something something"//TODO 
+const private_key = Buffer.from('FoCKvdLslUuB4y3EZlKate7XGottHski1LmyqJHvUhs=', 'base64');//TODO 
 
+const algorithm = 'aes-256-ctr'; 
+
+const IV_LENGTH = 16; 
 
 function log(text){
     let time = new Date(); 
@@ -100,9 +103,12 @@ module.exports = {
 
             log("Encryptable string is: " + encryptable_string);
 
-            let cipher = CryptoJS.AES.encrypt(encryptable_string, private_key).toString();
-        
-            encrypted_struct[key] = cipher; 
+            let iv = crypto.randomBytes(IV_LENGTH);
+            let cipher = crypto.createCipheriv(algorithm, Buffer.from(private_key, 'hex'), iv); 
+            let encrypted = cipher.update(encryptable_string, 'utf-8');
+            encrypted = Buffer.concat([encrypted, cipher.final()]); 
+
+            encrypted_struct[key] = iv.toString('hex') + ':' + encrypted.toString('hex'); 
         }
         
         return encrypted_struct; 
@@ -135,10 +141,14 @@ module.exports = {
 
             log("Decryptable string is: " + decryptable_string);
 
-            let bytes = CryptoJS.AES.decrypt(decryptable_string, private_key);
-            let originalField = bytes.toString(CryptoJS.enc.Utf8);
-        
-            decrypted_struct[key] = this.turnDecryptedStringIntoArray(key,originalField); 
+
+            let textParts = decryptable_string.split(':');
+            let iv = Buffer.from(textParts.shift(), 'hex');
+            let encryptedText = Buffer.from(textParts.join(':'), 'hex');
+            let decipher = crypto.createDecipheriv(algorithm, Buffer.from(private_key, 'hex'), iv);
+            let decrypted = decipher.update(encryptedText);
+            decrypted = Buffer.concat([decrypted, decipher.final()]).toString();
+            decrypted_struct[key] = this.turnDecryptedStringIntoArray(key,decrypted); 
         }
         
         return decrypted_struct; 
