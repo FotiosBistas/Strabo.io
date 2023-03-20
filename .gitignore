@@ -132,4 +132,4 @@ dmypy.json
 iv.txt 
 passphrase.txt 
 encryptedkey.txt
-
+hashed_passphrase.txt

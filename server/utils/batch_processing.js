@@ -1,22 +1,6 @@
-const fs = require('fs');
 const crypto = require('crypto');
 
 
-
-const algorithm = 'aes-256-ctr'; 
-
-const IV_LENGTH = 16; 
-
-
-// Read the encrypted key, passphrase, and IV from the files
-const encryptedKey = fs.readFileSync('./utils/encryptedkey.txt', 'utf8');
-const passphrase = Buffer.from(fs.readFileSync('./utils/passphrase.txt', 'utf8'), 'hex');
-const iv = Buffer.from(fs.readFileSync('./utils/iv.txt', 'utf8'), 'hex');
-
-// Decrypt the private key using the passphrase and IV
-const decipher = crypto.createDecipheriv('aes-256-ctr', passphrase, iv);
-let private_key = decipher.update(encryptedKey, 'hex', 'utf8');
-private_key += decipher.final('utf8');
 
 function log(text){
     let time = new Date(); 

@@ -7,6 +7,11 @@ const dictionary_interactions = require('./utils/dictionary.js');
 const batch_utilities = require('./utils/batch_processing.js'); 
 const { v4: uuidv4 } = require('uuid'); 
 const batch_processing = require('./utils/batch_processing.js');
+require("dotenv").config(); 
+require('./utils/process_keys');
+
+
+
 
 function log(text){
     let time = new Date(); 
