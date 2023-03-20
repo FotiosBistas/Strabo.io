@@ -1,6 +1,6 @@
 const { MongoClient , ServerApiVersion} = require('mongodb'); 
 const ObjectId = require('mongodb').ObjectId;
-const uri = "mongodb+srv://Fotis:MQN5IGV2uTI0Pe0n@dictionarycluster.mkmtbvi.mongodb.net/?retryWrites=true&w=majority";
+const uri = `mongodb+srv://${process.env.mongouser}:${process.env.mongopass}@dictionarycluster.mkmtbvi.mongodb.net/?retryWrites=true&w=majority`;
 //hi
 function log(text){
     var time = new Date();
