@@ -14,6 +14,6 @@ let encryptedKey = cipher.update(privateKey, 'utf8', 'hex');
 encryptedKey += cipher.final('hex');
 
 // Save the encrypted key, passphrase, and IV to files
-fs.writeFileSync('encrypted-key.txt', encryptedKey);
+fs.writeFileSync('encryptedkey.txt', encryptedKey);
 fs.writeFileSync('passphrase.txt', passphrase.toString('hex'));
 fs.writeFileSync('iv.txt', Buffer.from(iv).toString('hex'));
