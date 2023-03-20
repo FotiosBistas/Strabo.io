@@ -9,7 +9,7 @@ const IV_LENGTH = 16;
 
 
 // Read the encrypted key, passphrase, and IV from the files
-const encryptedKey = fs.readFileSync('./utils/encrypted_key.txt', 'utf8');
+const encryptedKey = fs.readFileSync('./utils/encryptedkey.txt', 'utf8');
 const passphrase = Buffer.from(fs.readFileSync('./utils/passphrase.txt', 'utf8'), 'hex');
 const iv = Buffer.from(fs.readFileSync('./utils/iv.txt', 'utf8'), 'hex');
 
