@@ -108,7 +108,7 @@ module.exports = {
             let encrypted = cipher.update(encryptable_string, 'utf-8');
             encrypted = Buffer.concat([encrypted, cipher.final()]); 
 
-            encrypted_struct[key] = iv.toString('hex') + ':' + encrypted.toString('hex'); 
+            encrypted_struct[key] = iv.toString('hex') + encrypted.toString('hex'); 
         }
         
         return encrypted_struct; 
@@ -141,11 +141,11 @@ module.exports = {
 
             log("Decryptable string is: " + decryptable_string);
 
-
-            let textParts = decryptable_string.split(':');
-            let iv = Buffer.from(textParts.shift(), 'hex');
-            let encryptedText = Buffer.from(textParts.join(':'), 'hex');
-            let decipher = crypto.createDecipheriv(algorithm, Buffer.from(private_key, 'hex'), iv);
+            let iv = decryptable_string.slice(0,IV_LENGTH * 2); 
+            let iv_buffer = Buffer.from(iv,'hex');
+            let to_be_en = decryptable_string.slice(IV_LENGTH * 2,decryptable_string.length)
+            let encryptedText = Buffer.from(to_be_en, 'hex');
+            let decipher = crypto.createDecipheriv(algorithm, Buffer.from(private_key, 'hex'), iv_buffer);
             let decrypted = decipher.update(encryptedText);
             decrypted = Buffer.concat([decrypted, decipher.final()]).toString();
             decrypted_struct[key] = this.turnDecryptedStringIntoArray(key,decrypted); 
