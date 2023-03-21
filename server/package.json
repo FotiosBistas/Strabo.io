@@ -4,8 +4,10 @@
     "dotenv": "^16.0.3",
     "express": "^4.18.2",
     "mongodb": "^5.1.0",
+    "node-schedule": "^2.1.1",
     "nodemon": "^2.0.21",
     "prompt-sync": "^4.2.0",
+    "python-shell": "^5.0.0",
     "uuid": "^9.0.0"
   }
 }
