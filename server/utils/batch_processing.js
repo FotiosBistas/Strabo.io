@@ -1,11 +1,25 @@
 const crypto = require('crypto');
-
+const process_keys = require('./process_keys.js')
 
 
 function log(text){
     let time = new Date(); 
     console.log("[" + time.toLocaleTimeString() + "] " + " " + text)
 }
+
+
+
+// Read the encrypted key, passphrase, and IV from the environment variable
+const encryptedKey = process.env.enkey;
+const iv = Buffer.from(process.env.iv,'hex');
+const pass = process_keys.passphrase; 
+const IV_LENGTH = 16; 
+const algorithm = 'aes-256-ctr'; 
+
+// Decrypt the private key using the passphrase and IV
+const decipher = crypto.createDecipheriv('aes-256-ctr', pass, iv);
+let private_key = decipher.update(encryptedKey, 'hex', 'utf8');
+private_key += decipher.final('utf8');
 
 module.exports = {
 
