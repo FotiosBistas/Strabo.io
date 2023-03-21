@@ -4,6 +4,7 @@ const https = require('https');
 const app = express();
 require("dotenv").config(); 
 require('./utils/process_keys');
+require('./utils/train_model');
 const mongoDBinteractions = require('./mongo_db_api/mongo.js'); 
 const dictionary_interactions = require('./utils/dictionary.js');
 const batch_utilities = require('./utils/batch_processing.js'); 
