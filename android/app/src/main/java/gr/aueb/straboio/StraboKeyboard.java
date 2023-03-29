@@ -1,12 +1,9 @@
 package gr.aueb.straboio;
 
-import android.app.Service;
-import android.content.Intent;
 import android.inputmethodservice.InputMethodService;
 import android.inputmethodservice.Keyboard;
 import android.inputmethodservice.KeyboardView;
 import android.media.AudioManager;
-import android.os.IBinder;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.inputmethod.InputConnection;
@@ -29,7 +26,8 @@ public class StraboKeyboard extends InputMethodService implements KeyboardView.O
 
     @Override
     public void onPress(int i) {
-
+        // Disables pop-up preview for special keys (space, shift, backspace)
+        kview.setPreviewEnabled( (i != 32) && (i != Keyboard.KEYCODE_SHIFT) && (i != Keyboard.KEYCODE_DELETE));
     }
 
     @Override

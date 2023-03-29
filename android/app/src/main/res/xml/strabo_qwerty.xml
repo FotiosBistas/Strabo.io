@@ -1,12 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Keyboard xmlns:android="http://schemas.android.com/apk/res/android"
     android:keyWidth="10%p"
-    android:horizontalGap="0px"
-    android:verticalGap="0px"
+    android:horizontalGap="0.5%p"
+    android:verticalGap="1%p"
     android:keyHeight="60dp">
 
+    <!-- dummy row just for spacing -->
+    <Row
+        android:keyHeight="0.20%p">
+    </Row>
+
     <!-- digit row -->
-    <Row>
+    <Row
+        android:keyHeight="6%p">
         <!-- Key syntax -->
         <!-- keyLabel == text displayed on the key-->
         <!-- keyEdgeFlags == position of key on the keyboard-->
@@ -132,6 +138,7 @@
         <Key
             android:keyLabel="a"
             android:keyEdgeFlags="left"
+            android:horizontalGap="3.5%p"
             android:codes="97"
             />
 
@@ -175,11 +182,6 @@
             android:codes="108"
             />
 
-        <Key
-            android:keyLabel="\# \@"
-            android:keyEdgeFlags="right"
-            android:codes="35,64"
-            />
     </Row>
 
     <!-- ZXCVBN row -->
@@ -191,6 +193,7 @@
         <Key
             android:keyLabel="CAPS"
             android:keyEdgeFlags="left"
+            android:keyWidth="15%p"
             android:codes="-1"
             />
 
@@ -230,15 +233,12 @@
             />
 
         <Key
-            android:keyLabel="."
-            android:codes="46"
-            />
-
-        <Key
-            android:keyLabel="\? ! :"
+            android:keyLabel="\u232b"
+            android:isRepeatable="true"
             android:keyEdgeFlags="right"
-            android:codes="53,33,58"
-            />
+            android:keyWidth="15%p"
+            android:codes="-5" />
+
     </Row>
 
     <!-- util row -->
@@ -247,13 +247,22 @@
         <!-- keyLabel == text displayed on the key-->
         <!-- keyEdgeFlags == position of key on the keyboard-->
         <!-- codes == ASCII value of character-->
-        <Key android:keyLabel="," android:keyWidth="10%p" android:keyEdgeFlags="left" android:codes="44" />
-        <Key android:keyLabel="/" android:keyWidth="10%p" android:codes="47" />
-        <Key android:keyLabel="SPACE" android:keyWidth="40%p" android:isRepeatable="true" android:codes="32" />
-        <Key android:keyLabel="DEL" android:keyWidth="20%p" android:isRepeatable="true" android:codes="-5" />
+        <Key android:keyLabel="EN" android:keyWidth="10%p" android:keyEdgeFlags="left"/>
+        <Key android:keyLabel="," android:keyWidth="10%p" android:codes="44" />
+        <Key android:keyLabel=" " android:keyWidth="50%p"  android:codes="32"/>
+        <Key
+            android:keyLabel="."
+            android:codes="46"
+            android:keyWidth="10%p"
+            />
         <Key android:keyLabel="DONE" android:keyWidth="20%p" android:isRepeatable="true" android:keyEdgeFlags="right" android:codes="-4" />
 
 
+    </Row>
+
+    <!-- dummy row just for spacing -->
+    <Row
+        android:keyHeight="0.20%p">
     </Row>
 
 </Keyboard>

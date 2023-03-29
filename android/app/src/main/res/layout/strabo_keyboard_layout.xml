@@ -7,7 +7,7 @@
     android:keyTextColor="@android:color/white"
     android:keyBackground="@drawable/strabo_key_bg"
     android:keyPreviewLayout="@layout/strabo_key_preview"
-    android:background="@color/keyboard_bg_color"
+    android:background="@color/keyboard_divider"
     >
 
 
