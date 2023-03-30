@@ -247,7 +247,7 @@
         <!-- keyLabel == text displayed on the key-->
         <!-- keyEdgeFlags == position of key on the keyboard-->
         <!-- codes == ASCII value of character-->
-        <Key android:keyLabel="EN" android:keyWidth="10%p" android:keyEdgeFlags="left" android:keyOutputText=""/>
+        <Key android:keyLabel="EN" android:keyWidth="10%p" android:keyEdgeFlags="left" android:keyOutputText="" android:codes="91091"/>
         <Key android:keyLabel="," android:keyWidth="10%p" android:codes="44" />
         <Key android:keyLabel=" " android:keyWidth="50%p"  android:codes="32"/>
         <Key
