@@ -1,5 +1,5 @@
 greek_dictionary = new Set(); 
-
+greek_dictionary.add("");
 function log(text){
     var time = new Date();
     console.log("[" + time.toLocaleTimeString() + "] " + text);
@@ -15,6 +15,13 @@ module.exports = {
      * @returns the bitmap for the specific sample.  
      */
     createBitmaps: function(words){
+        
+
+        if(greek_dictionary.size == 0){
+            log("Dictionary has not been produced yet");
+            return 0;
+        }
+
         let word_bitmap = new Array(greek_dictionary.size).fill(0);
 
         index = 0; 
@@ -50,12 +57,18 @@ module.exports = {
     extractMatchScore: function(bitmap){
 
         let sum = 0; 
+
+        if(greek_dictionary.size == 0){
+            return 0; 
+        }
+
         bitmap.forEach(sample => {
 
             sum = sum + sample; 
         });
 
-        return sum/length(greek_dictionary.size); 
+
+        return sum /greek_dictionary.size; 
     },
 
     /**

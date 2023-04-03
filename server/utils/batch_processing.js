@@ -1,13 +1,16 @@
 const crypto = require('crypto');
-const process_keys = require('./process_keys.js')
-
+const process_keys = require('./process_keys.js');
+const dictionary = require('./dictionary.js');
 
 function log(text){
     let time = new Date(); 
     console.log("[" + time.toLocaleTimeString() + "] " + " " + text)
 }
 
+//consts 
 
+//used to determine whether a new sample should be added to the database 
+MATCH_SCORE_THRESHOLD = 0.6; 
 
 // Read the encrypted key, passphrase, and IV from the environment variable
 const encryptedKey = process.env.enkey;
@@ -45,7 +48,8 @@ module.exports = {
             let non_translated_words = this.wordTokenizer(translation_struct.non_translated);
             let non_translated_sentences = this.sentenceTokenizer(translation_struct.non_translated);
 
-            let timestamp = new Date().toISOString().split('T')[0];//TODO probably not needed in the end, helps to debug 
+            let today = new Date(); 
+            let timestamp = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 2).toISOString().split('T')[0];//TODO probably not needed in the end, helps to debug 
 
             // let date = new Date();
             // date.setDate(date.getDate() + 1);  
@@ -64,8 +68,16 @@ module.exports = {
                 "non_translated": translation_struct.non_translated
             };
 
-            let encrypted_struct = this.encryptData(database_struct);
-            database_structs.push(encrypted_struct);
+            //determine whether new sample should be inserted into the database 
+            let bitmap = dictionary.createBitmaps(translated_words);
+            if(bitmap){ 
+
+                if(dictionary.extractMatchScore(bitmap) < MATCH_SCORE_THRESHOLD){
+
+                    let encrypted_struct = this.encryptData(database_struct);
+                    database_structs.push(encrypted_struct);
+                };
+            }
         })
         log("Rough size of object is: " + this.roughSizeOfObject(database_structs) + " bytes");
         return database_structs;
