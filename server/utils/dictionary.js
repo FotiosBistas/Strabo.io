@@ -28,6 +28,19 @@ module.exports = {
         return word_bitmap;  
     },
 
+
+    /**
+     * Creates a new dictionary for the specified time interval
+     * keeping the most common weighted averages 
+    */
+    createNewDictionary: function(new_set){
+
+        //empties the dictionary 
+        greek_dictionary.clear(); 
+
+        greek_dictionary = new_set; 
+    },
+
     /**
      * Returns the match score for a specific bitmap. 
      * E.g. if a sample has 3 matches over 5 it means it's a common occurence. 
