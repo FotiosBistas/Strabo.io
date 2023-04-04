@@ -5,6 +5,9 @@ function log(text){
     console.log("[" + time.toLocaleTimeString() + "] " + text);
 }
 
+
+const DELETE_THRESHOLD = 4000; 
+
 module.exports = {
 
     /**
@@ -39,9 +42,24 @@ module.exports = {
     /**
      * Creates a new dictionary for the specified time interval
      * keeping the most common weighted averages 
+     * @param {*} map accepts a map of the weighted averages 
     */
-    createNewDictionary: function(new_set){
+    createNewDictionary: function(map){
 
+        keys = []; 
+
+        for (const [key, value] of map){
+
+            if(value < DELETE_THRESHOLD){
+                keys.push(key); 
+            }
+        }
+
+        for(const key of keys){
+            map.delete(key); 
+        }
+
+        let new_set = new Set(map.keys()); 
         //empties the dictionary 
         greek_dictionary.clear(); 
 

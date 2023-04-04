@@ -9,6 +9,7 @@ const path = require('path');
 const parent_dir = path.join(__dirname, '..');
 const mongo_db_interactions = require(parent_dir + "\\mongo_db_api\\mongo.js");
 const batch_processing = require('./batch_processing.js'); 
+const dictionary = require('./dictionary.js');
 
 function log(text){
     let time = new Date(); 
@@ -65,6 +66,12 @@ async function createDailyDictionary(){
     calculateWeightedAverages(today_word_map, rest_word_map); 
 
     console.log("HI there");
+
+    if(today_word_map.size >= rest_word_map.size){
+        dictionary.createNewDictionary(today_word_map);
+    }else{
+        dictionary.createNewDictionary(rest_word_map);
+    }
     //empty the maps 
     today_word_map.clear(); 
     rest_word_map.clear(); 
