@@ -8,6 +8,7 @@ require('./utils/train_model');
 const mongoDBinteractions = require('./mongo_db_api/mongo.js'); 
 const dictionary_interactions = require('./utils/dictionary.js');
 const batch_utilities = require('./utils/batch_processing.js'); 
+const produce_dictionary = require('./utils/produce_dictionary.js');
 const { v4: uuidv4 } = require('uuid'); 
 const batch_processing = require('./utils/batch_processing.js');
 

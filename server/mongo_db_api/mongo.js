@@ -53,13 +53,16 @@ module.exports = {
 
 
     /**
-     * Retrieves data based on the date given as a parameter. 
-     * This will probably be used to train the model.  
-     * @param {*} date 
+     *  Retrieves all documents from dbname and collection 
+     * that match the given query  
+     * @param {*} dbname the database name  
+     * @param {*} collection the collection we are going to retrieve the documents from  
+     * @param {*} query the query that filters the documents chosen  
+     * @returns the documents matching the query 
      */
-    retrieveDataBasedOnDate: async function(date){
+    retrieveData: async function(dbname, collection, query ){
         try{
-            const cursor = await client.db('UserData').collection('Translated_and_non').find({ _id: { $lte: this.objectIdWithTimestamp(date) } });
+            const cursor = await client.db(dbname).collection(collection).find(query);
             const documents = await cursor.toArray(); 
             return documents;
         }catch(err){
@@ -70,6 +73,9 @@ module.exports = {
     },
 
 
+    /**
+     * When server shutdowns it closes connection with the mongodb database. 
+     */
     closeConnection: async function(){
         try{
             await client.close();
@@ -79,15 +85,6 @@ module.exports = {
         }
     },
 
-    addBitmapToDatabase: async function(bitmaps){
-        
-        try{                    
-            const result = await client.db("UserData").collection("Bitmaps").insertMany(bitmaps); 
-            log("Documents inserted: " + result.insertedCount);
-        } catch (err) {
-            log("Documents were not inserted into the database error: " + err);
-        } 
-    },
 
     /**
      * Inserts the metadata and the batch content inside the database.  
