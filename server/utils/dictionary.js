@@ -6,7 +6,7 @@ function log(text){
 }
 
 
-const DELETE_THRESHOLD = 4000; 
+const DICTIONARY_SIZE = 4000; 
 
 module.exports = {
 
@@ -48,18 +48,26 @@ module.exports = {
 
         keys = []; 
 
-        for (const [key, value] of map){
-
-            if(value < DELETE_THRESHOLD){
-                keys.push(key); 
-            }
+        //keep all the words as the words 
+        //are smaller than the threshold 
+        //dictionary size 
+        if(map.size < DICTIONARY_SIZE){
+            let new_set = new Set(map.keys()); 
+            greek_dictionary.clear(); 
+            greek_dictionary = new_set; 
+            return 
         }
 
-        for(const key of keys){
-            map.delete(key); 
-        }
 
-        let new_set = new Set(map.keys()); 
+        //sort the weighted averages in a descending order
+        //and take the most commonly used.
+        let dictionary_array = Array.from(map, ([name, value]) => ({name, value})); 
+
+        dictionary_array.sort((a, b) => b.value - a.value); 
+        
+        let frequent_word = dictionary_array.slice(0, DICTIONARY_SIZE).map(({name}) => name);
+
+        let new_set = new Set(frequent_word); 
         //empties the dictionary 
         greek_dictionary.clear(); 
 
