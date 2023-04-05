@@ -146,7 +146,7 @@ module.exports = {
         let decrypted_struct = {}; 
 
 
-        non_needed_decryption_fields = ['timestamp', 'number_of_sentences', 'number_of_words'];  
+        non_needed_decryption_fields = ['timestamp', 'number_of_sentences', '_id', 'number_of_words'];  
 
         for(const [key,value] of Object.entries(encrypted_struct)){
             
