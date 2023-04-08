@@ -28,7 +28,11 @@ public class Vocabulary {
     }
 
     public int index(String token){
-        return (int) this.vocab.get(token);
+        if(this.vocab.containsKey(token)){
+            return (int) this.vocab.get(token);
+        } else {
+            return this.vocab.size();
+        }
     }
 
     public void insertToken(String token){
