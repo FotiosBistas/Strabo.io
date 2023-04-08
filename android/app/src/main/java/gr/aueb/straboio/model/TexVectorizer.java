@@ -105,4 +105,7 @@ public class TexVectorizer {
         return Tensor.fromBlob(vectorized_tokens, new long[]{ vectorized_tokens.length });
     }
 
+    public int getIndex(String tok){
+        return this.vocabulary.index(tok);
+    }
 }
