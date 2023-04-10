@@ -47,10 +47,9 @@ public class Vocabulary {
         return (String) this.indexToToken.get(index);
     }
 
-    public void load(Context c, String vocab_file_name){
+    public void load(String vocab_file_name){
         try {
-            String path = getAssetFilePath(c, vocab_file_name);
-            File f = new File(path);
+            File f = new File(vocab_file_name);
 
             // Create a Scanner object to read from the file
             Scanner scanner = new Scanner(f);

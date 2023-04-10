@@ -1,7 +1,5 @@
 package gr.aueb.straboio.model;
 
-import android.content.Context;
-
 import org.pytorch.Tensor;
 
 import java.util.List;
@@ -15,16 +13,14 @@ public class TexVectorizer {
 
     private Mode mode;
     private Vocabulary vocabulary;
-    private Context c;
 
-    public TexVectorizer(Context c, Mode mode) {
-        this.c = c;
+    public TexVectorizer(Mode mode) {
         this.mode = mode;
         this.vocabulary = new Vocabulary();
     }
 
-    public TexVectorizer(Context c, Mode mode, String pathToExistingVocab){
-        this(c, mode);
+    public TexVectorizer(Mode mode, String pathToExistingVocab){
+        this(mode);
         this.loadExistingVocab(pathToExistingVocab);
     }
 
@@ -33,7 +29,7 @@ public class TexVectorizer {
      * @param pathToExistingVocab the path to the external vocabulary.
      */
      private void loadExistingVocab(String pathToExistingVocab){
-        this.vocabulary.load(this.c, pathToExistingVocab);
+        this.vocabulary.load(pathToExistingVocab);
     }
 
     /**
