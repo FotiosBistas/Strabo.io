@@ -1,6 +1,5 @@
 package gr.aueb.straboio.model;
 
-import android.util.Log;
 import android.util.Pair;
 
 import org.pytorch.IValue;
@@ -308,13 +307,9 @@ public class LanguageModelLSTM implements LanguageModel{
                 String[] replacements;
                 if(length == 2){
                     String token = lstmState.getRemaining().get(0) + lstmState.getRemaining().get(1);
-                    Log.d("GET_CAND", "token:"+token);
                     replacements = GREEKLISH_TO_GREEK.containsKey(token)
                     ? GREEKLISH_TO_GREEK.get(token)
                     : new String[] {};
-                    Log.d("GET_CAND", ""+lstmState.getRemaining().toString());
-                    Log.d("GET_CAND", "length: "+length+", rem_size: "+lstmState.getRemaining().size());
-                    Log.d("GET_CAND", "replacemens: "+replacements.length);
                 } else {
                     String token = lstmState.getRemaining().get(0);
                     replacements = GREEKLISH_TO_GREEK.containsKey(token)
