@@ -1,21 +1,38 @@
 package gr.aueb.straboio.keyboard;
 
+import android.content.Context;
 import android.inputmethodservice.InputMethodService;
 import android.inputmethodservice.Keyboard;
 import android.inputmethodservice.KeyboardView;
 import android.media.AudioManager;
+import android.os.AsyncTask;
 import android.os.Handler;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
+import android.view.inputmethod.ExtractedTextRequest;
 import android.view.inputmethod.InputConnection;
+import android.widget.Toast;
+
+import org.pytorch.Module;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 import gr.aueb.straboio.R;
+import gr.aueb.straboio.model.LanguageModel;
+import gr.aueb.straboio.model.LanguageModelLSTM;
+import gr.aueb.straboio.model.Model;
+import gr.aueb.straboio.model.TexVectorizer;
 
 public class StraboKeyboard extends InputMethodService implements KeyboardView.OnKeyboardActionListener {
 
     private KeyboardView kview;
     private Keyboard keyboard;
+    private InputConnection iconn = null;
 
     private boolean isCaps = false;
     private boolean isEnglish = true;
@@ -27,20 +44,60 @@ public class StraboKeyboard extends InputMethodService implements KeyboardView.O
     private boolean wasLongPressed = false;
     private static final int LONG_PRESS_TIMEOUT = 600; // in milliseconds
 
+    private LanguageModel translator = null;
+    private StringBuilder transInput = new StringBuilder("");
+
+    private boolean aiIsON = true;
+
     private Runnable mLongPressed = new Runnable() {
         public void run() {
             isLongPressed = true;
             // handle long press
-            Log.d("longpressdet", "run: pressing...");
             InputConnection iconn = getCurrentInputConnection();
-            if(!isEnglish){
+            if (!isEnglish) {
                 iconn.commitText(((Character) keymapper.toSPECIAL(targetcode)).toString(), 1);
-                wasLongPressed =! wasLongPressed;
+                wasLongPressed = !wasLongPressed;
 
             }
             isLongPressed = false;
         }
     };
+
+    public static String getAssetFilePath(Context context, String assetName) throws IOException {
+        File file = new File(context.getFilesDir(), assetName);
+        if (file.exists() && file.length() > 0) {
+            return file.getAbsolutePath();
+        }
+        try (InputStream is = context.getAssets().open(assetName)) {
+            try (OutputStream os = new FileOutputStream(file)) {
+                byte[] buffer = new byte[4 * 1024];
+                int read;
+                while ((read = is.read(buffer)) != -1) {
+                    os.write(buffer, 0, read);
+                }
+                os.flush();
+            }
+            return file.getAbsolutePath();
+        }
+    }
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        // Setup model.
+        try {
+            Module model = Module.load(getAssetFilePath(this, "SCR_OPT_LSTM_LM_50000_char_120_32_512.pt"));
+            TexVectorizer texVectorizer = new TexVectorizer(
+                    TexVectorizer.Mode.CHAR,
+                    getAssetFilePath(this, "vocab_50000_char_120_128_1024.csv")
+            );
+            Model lstmodel = new Model(model, 120, 32, 512, 120);
+            translator = new LanguageModelLSTM(lstmodel, texVectorizer, 3);
+        } catch (IOException e) {
+            Log.d("ERR_LOAD_MODULE", "onCreate: " + e.getMessage());
+        }
+
+    }
 
     @Override
     public View onCreateInputView() {
@@ -54,7 +111,7 @@ public class StraboKeyboard extends InputMethodService implements KeyboardView.O
     @Override
     public void onPress(int i) {
         // Disables pop-up preview for special keys (space, shift, backspace)
-        kview.setPreviewEnabled( (i != 32) && (i != Keyboard.KEYCODE_SHIFT) && (i != Keyboard.KEYCODE_DELETE));
+        kview.setPreviewEnabled((i != 32) && (i != Keyboard.KEYCODE_SHIFT) && (i != Keyboard.KEYCODE_DELETE));
         // Special character on long press
         isLongPressed = false;
         targetcode = i;
@@ -67,20 +124,22 @@ public class StraboKeyboard extends InputMethodService implements KeyboardView.O
         mHandler.removeCallbacks(mLongPressed);
         if (!isLongPressed) {
             // handle short press
-            Log.d("longpressdet", "run: stopped!");
         }
     }
 
     @Override
     public void onKey(int i, int[] ints) {
-        InputConnection iconn = getCurrentInputConnection();
+        iconn = getCurrentInputConnection();
         playSoundEffect(i);
         switch (i) {
             case Keyboard.KEYCODE_DELETE:
-                iconn.deleteSurroundingText(1,0);
+                iconn.deleteSurroundingText(1, 0);
+                if (aiIsON)
+                    if (transInput.length() > 0)
+                        transInput.deleteCharAt(transInput.length() - 1);
                 break;
             case Keyboard.KEYCODE_SHIFT:
-                isCaps  = !isCaps;
+                isCaps = !isCaps;
                 keyboard.setShifted(isCaps);
                 kview.invalidateAllKeys();
                 break;
@@ -98,9 +157,26 @@ public class StraboKeyboard extends InputMethodService implements KeyboardView.O
 
                 String characterToOutput = String.valueOf((isEnglish) ? keymapper.toEN(code) : keymapper.toGR(code));
                 iconn.commitText(characterToOutput, 1);
-                if(wasLongPressed){
-                    iconn.deleteSurroundingText(1,0);
+                if (wasLongPressed) {
+                    iconn.deleteSurroundingText(1, 0);
                     wasLongPressed = !wasLongPressed;
+                }
+                if (aiIsON) {
+                    transInput.append(characterToOutput);
+                    // Translate:
+                    if (code == 32 && isEnglish) {
+                        /* LEGACY NON-MULTITHREADED WAY
+
+                            iconn.deleteSurroundingText(transInput.length(), 0); // delete
+                            String transOutput = translator.translate(transInput.toString()); // translate
+                            iconn.commitText(transOutput, 1); // replace with new buffer
+                            transInput = new StringBuilder("");
+                        */
+                        new CorrectTask().execute(iconn.getExtractedText(new ExtractedTextRequest(), 0).text.toString(), new StringBuilder(transInput).toString());
+                        transInput = new StringBuilder("");
+                    } else if (code == 32) {
+                        transInput = new StringBuilder("");
+                    }
                 }
         }
     }
@@ -110,7 +186,7 @@ public class StraboKeyboard extends InputMethodService implements KeyboardView.O
             if (isEnglish) {
                 // Update key labels for English language
                 // For example, you can set the label to "A" for the letter "A"
-                if(key.codes[0] == -999){
+                if (key.codes[0] == -999) {
                     key.label = "en";
                 }
                 if (key.label != null && (Character.isLetter(key.codes[0]))) {
@@ -118,7 +194,7 @@ public class StraboKeyboard extends InputMethodService implements KeyboardView.O
                 }
             } else {
                 // Update key labels for other language
-                if(key.codes[0] == -999){
+                if (key.codes[0] == -999) {
                     key.label = "ελ";
                 }
                 if (key.label != null && Character.isLetter(key.codes[0])) {
@@ -131,9 +207,9 @@ public class StraboKeyboard extends InputMethodService implements KeyboardView.O
 
     }
 
-    private void playSoundEffect(int i){
+    private void playSoundEffect(int i) {
         AudioManager am = (AudioManager) getSystemService(AUDIO_SERVICE);
-        switch(i){
+        switch (i) {
             case 32:
                 am.playSoundEffect(AudioManager.FX_KEYPRESS_SPACEBAR);
                 break;
@@ -166,11 +242,37 @@ public class StraboKeyboard extends InputMethodService implements KeyboardView.O
 
     @Override
     public void swipeDown() {
-
+        aiIsON = !aiIsON;
+        if (!aiIsON)
+            transInput = new StringBuilder("");
+        Toast.makeText(getApplicationContext(), "AI assist " + (aiIsON ? "ON" : "OFF") + ".", Toast.LENGTH_SHORT).show();
     }
 
     @Override
     public void swipeUp() {
 
+    }
+
+    private class CorrectTask extends AsyncTask<String, Void, Void> {
+
+        private String transOutput = "";
+        private String targetTransInput = "";
+        private String textUpUntilThatPoint;
+
+        @Override
+        protected Void doInBackground(String... strings) {
+            textUpUntilThatPoint = strings[0];
+            targetTransInput = strings[1];
+            transOutput = translator.translate(targetTransInput); // translate
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void unused) {
+            int end = Math.max(textUpUntilThatPoint.length() - targetTransInput.length(), 0);
+            iconn.setComposingRegion(textUpUntilThatPoint.substring(0, end).length(), textUpUntilThatPoint.length());
+            iconn.setComposingText(transOutput, iconn.getExtractedText(new ExtractedTextRequest(), 0).text.length());
+            iconn.finishComposingText();
+        }
     }
 }
