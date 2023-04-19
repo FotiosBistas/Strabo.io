@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">Strabo.io</string>
+    <string name="accessibility_service_label">Send Training Data</string>
+    <string name="accessibility_service_description">Improve the translation model by providing user input as training data.\n\nIMPORTANT: Training data is being collected anonymously.</string>
 </resources>

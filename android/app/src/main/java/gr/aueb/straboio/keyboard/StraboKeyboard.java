@@ -1,12 +1,16 @@
 package gr.aueb.straboio.keyboard;
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.inputmethodservice.InputMethodService;
 import android.inputmethodservice.Keyboard;
 import android.inputmethodservice.KeyboardView;
 import android.media.AudioManager;
 import android.os.AsyncTask;
 import android.os.Handler;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
@@ -63,6 +67,17 @@ public class StraboKeyboard extends InputMethodService implements KeyboardView.O
         }
     };
 
+    // Handle inter-service messaging:
+    private BroadcastReceiver receiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            // Handle NOTIFY_VIEW_TEXT_SELECTION_CHANGED:
+            String potentialEmptyText = getCurrentInputConnection().getExtractedText(new ExtractedTextRequest(), 0).text.toString();
+            if(potentialEmptyText.equals(""))
+                Log.d("TEXT_SELECTION_CHANGED", "SAVED.");
+        }
+    };
+
     public static String getAssetFilePath(Context context, String assetName) throws IOException {
         File file = new File(context.getFilesDir(), assetName);
         if (file.exists() && file.length() > 0) {
@@ -97,6 +112,11 @@ public class StraboKeyboard extends InputMethodService implements KeyboardView.O
             Log.d("ERR_LOAD_MODULE", "onCreate: " + e.getMessage());
         }
 
+        // Setup message receiver:
+        LocalBroadcastManager.getInstance(this).registerReceiver(
+                receiver,
+                new IntentFilter("gr.aueb.straboio.NOTIFY_VIEW_TEXT_SELECTION_CHANGED")
+        );
     }
 
     @Override
