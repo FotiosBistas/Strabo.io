@@ -17,22 +17,48 @@ function runTrainScript(){
 
     log('Running train script');
 
-    //TODO appropriate query to get only the sentences from the database 
     //TODO modify to run on batches do not call the script with 10000 samples 
-    mongo_db_interactions.retrieveData("UserData", "Translated_and_non", "TODO INSERT QUERY HERE");
+    // Retrieve the parallel data from mongodb
+    const results = mongo_db_interactions.retrieveData("UserData", "Translated_and_non", "{}, { translated: 1, non_translated: 1, _id: 0 }");
+    
+    const translatedList = [];
+    const nonTranslatedList = [];
+    // Load data into lists
+    results.forEach(item => {
+        translatedList.push(item.translated);
+        nonTranslatedList.push(item.non_translated);
+    });
 
+    // Split to 2000-item batches 
+    const batchSize = 2000;
+    const translatedBatches = [];
+    const nonTranslatedBatches = [];
 
-    let options = {
-        mode: 'text', 
-        pythonOptions: ['-u'], //print results 
-        scriptPath: './utils/python_scripts', 
-        args:[] //TODO add necessary enviroment variables these can be the batches 
+    for (let i = 0; i < translatedList.length; i += batchSize) {
+
+    const translatedBatch = translatedList.slice(i, i + batchSize);
+    translatedBatches.push(translatedBatch);
+    
+    const nonTranslatedBatch = nonTranslatedList.slice(i, i + batchSize);
+    nonTranslatedBatches.push(nonTranslatedBatch);
     }
 
-    PythonShell.run('train_model.py', options).then(messages => {
-        console.log(JSON.stringify(messages));
-        console.log('finished');
-    });
+    // Run training for each batch
+    for (let i = 0; i < translatedBatches.length; i++) {
+
+        let options = {
+            mode: 'text', 
+            pythonOptions: ['-u'], //print results 
+            scriptPath: './utils/python_scripts', 
+            args:[translatedBatches[i], nonTranslatedBatches[i]] //TODO add necessary enviroment variables these can be the batches 
+        }
+
+        PythonShell.run('train_model.py', options).then(messages => {
+            console.log(JSON.stringify(messages));
+            console.log('finished');
+        });
+      }
+        
 
 }
 
