@@ -12,8 +12,10 @@ import android.os.AsyncTask;
 import android.os.Handler;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
+import android.util.Pair;
 import android.view.KeyEvent;
 import android.view.View;
+import android.view.inputmethod.ExtractedText;
 import android.view.inputmethod.ExtractedTextRequest;
 import android.view.inputmethod.InputConnection;
 import android.widget.Toast;
@@ -27,6 +29,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 import gr.aueb.straboio.R;
+import gr.aueb.straboio.keyboard.support.Buffer;
 import gr.aueb.straboio.model.LanguageModel;
 import gr.aueb.straboio.model.LanguageModelLSTM;
 import gr.aueb.straboio.model.Model;
@@ -50,8 +53,10 @@ public class StraboKeyboard extends InputMethodService implements KeyboardView.O
 
     private LanguageModel translator = null;
     private StringBuilder transInput = new StringBuilder("");
+    private Buffer buffer;
 
     private boolean aiIsON = true;
+    private boolean backSpaceWasPressed = false;
 
     private Runnable mLongPressed = new Runnable() {
         public void run() {
@@ -60,6 +65,8 @@ public class StraboKeyboard extends InputMethodService implements KeyboardView.O
             InputConnection iconn = getCurrentInputConnection();
             if (!isEnglish) {
                 iconn.commitText(((Character) keymapper.toSPECIAL(targetcode)).toString(), 1);
+                // Cache special character to buffer
+                buffer.push(((Character) keymapper.toSPECIAL(targetcode)).toString(), getActualCursorPosition());
                 wasLongPressed = !wasLongPressed;
 
             }
@@ -73,8 +80,12 @@ public class StraboKeyboard extends InputMethodService implements KeyboardView.O
         public void onReceive(Context context, Intent intent) {
             // Handle NOTIFY_VIEW_TEXT_SELECTION_CHANGED:
             String potentialEmptyText = getCurrentInputConnection().getExtractedText(new ExtractedTextRequest(), 0).text.toString();
-            if(potentialEmptyText.equals(""))
-                Log.d("TEXT_SELECTION_CHANGED", "SAVED.");
+            if(potentialEmptyText.equals("") && !backSpaceWasPressed){
+                // TODO: Save training pair.
+                Log.d("CACHED", buffer.toString());
+                buffer.flush();
+                transInput = new StringBuilder();
+            }
         }
     };
 
@@ -117,6 +128,8 @@ public class StraboKeyboard extends InputMethodService implements KeyboardView.O
                 receiver,
                 new IntentFilter("gr.aueb.straboio.NOTIFY_VIEW_TEXT_SELECTION_CHANGED")
         );
+        // Setup training data collector buffer.
+        buffer = new Buffer();
     }
 
     @Override
@@ -154,23 +167,30 @@ public class StraboKeyboard extends InputMethodService implements KeyboardView.O
         switch (i) {
             case Keyboard.KEYCODE_DELETE:
                 iconn.deleteSurroundingText(1, 0);
+                // Delete from character from character's raw input:
+                buffer.push("BSP", getActualCursorPosition());
                 if (aiIsON)
                     if (transInput.length() > 0)
                         transInput.deleteCharAt(transInput.length() - 1);
+                backSpaceWasPressed = true;
                 break;
             case Keyboard.KEYCODE_SHIFT:
                 isCaps = !isCaps;
                 keyboard.setShifted(isCaps);
                 kview.invalidateAllKeys();
+                backSpaceWasPressed = false;
                 break;
             case Keyboard.KEYCODE_DONE:
                 iconn.sendKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_ENTER));
+                backSpaceWasPressed = false;
                 break;
             case -999:
                 isEnglish = !isEnglish;
                 updateAlphabetOfKeyboard();
+                backSpaceWasPressed = false;
                 break;
             default:
+                backSpaceWasPressed = false;
                 char code = (char) i;
                 if(Character.isLetter(code) && isCaps)
                     code = Character.toUpperCase(code);
@@ -180,25 +200,43 @@ public class StraboKeyboard extends InputMethodService implements KeyboardView.O
                 if (wasLongPressed) {
                     iconn.deleteSurroundingText(1, 0);
                     wasLongPressed = !wasLongPressed;
+                } else {
+                    if(isEnglish)
+                        buffer.push(characterToOutput, getActualCursorPosition());
                 }
-                if (aiIsON) {
+
+
+                /*
+                    We only want the translation to take place if:
+                        - translation is enabled in the first place
+                        - user is typing with latin characters
+                 */
+                if (aiIsON && isEnglish) {
                     transInput.append(characterToOutput);
                     // Translate:
                     if (code == 32 && isEnglish) {
-                        /* LEGACY NON-MULTITHREADED WAY
-
-                            iconn.deleteSurroundingText(transInput.length(), 0); // delete
-                            String transOutput = translator.translate(transInput.toString()); // translate
-                            iconn.commitText(transOutput, 1); // replace with new buffer
-                            transInput = new StringBuilder("");
-                        */
-                        new CorrectTask().execute(iconn.getExtractedText(new ExtractedTextRequest(), 0).text.toString(), new StringBuilder(transInput).toString());
+                        // Update buffer with translated output.
+                        this.buffer.update(getOuputedText());
+                        new CorrectTask().execute(iconn.getExtractedText(new ExtractedTextRequest(), 0).text.subSequence(0,getActualCursorPosition()).toString(), new StringBuilder(transInput).toString());
                         transInput = new StringBuilder("");
                     } else if (code == 32) {
                         transInput = new StringBuilder("");
                     }
                 }
         }
+    }
+
+    private int getActualCursorPosition(){
+        InputConnection inputConnection = getCurrentInputConnection();
+        ExtractedText extractedText = inputConnection.getExtractedText(new ExtractedTextRequest(), 0);
+        int currentCursorPosition = extractedText.startOffset + extractedText.selectionStart;
+        return currentCursorPosition;
+    }
+
+    private String getOuputedText(){
+        InputConnection inputConnection = getCurrentInputConnection();
+        String ouputedText = inputConnection.getExtractedText(new ExtractedTextRequest(), 0).text.toString();
+        return (ouputedText != null) ? ouputedText : "";
     }
 
     private void updateAlphabetOfKeyboard() {
@@ -291,8 +329,55 @@ public class StraboKeyboard extends InputMethodService implements KeyboardView.O
         protected void onPostExecute(Void unused) {
             int end = Math.max(textUpUntilThatPoint.length() - targetTransInput.length(), 0);
             iconn.setComposingRegion(textUpUntilThatPoint.substring(0, end).length(), textUpUntilThatPoint.length());
-            iconn.setComposingText(transOutput, iconn.getExtractedText(new ExtractedTextRequest(), 0).text.length());
+            // Get the current cursor position
+            int relativePosition = textUpUntilThatPoint.substring(0, end).length() + transOutput.length();
+            iconn.setComposingText(transOutput,
+                    /*
+                        According to the Android docs;
+                        "
+                            setComposingText's second argument (newCursorPosition) is the new cursor position around the text.
+                            If > 0, this is relative to the end of the text - 1; if <= 0, this is relative to the start of the text.
+                            So a value of 1 will always advance you to the position after the full text being inserted.
+                            Note that this means you can't position the cursor within the text, because the editor can make modifications
+                            to the text you are providing so it is not possible to correctly specify locations there.
+                        "
+
+                        So there are two possibilities:
+                        1) A word needs to be translated but we have already proceeded to typing another word.
+                                (Thus: actualCursorPosition > relativePosition -> relativePosition)
+                        2) The word that needs to be translated was just typed and we have not moved on to the next word.
+                                (Thus: actualCursorPosition == relativePosition -> 1)
+
+                        This *must* be done because the translation happens asynchronously.
+                     */
+                    (getActualCursorPosition() > relativePosition) ? relativePosition : 1
+
+            );
             iconn.finishComposingText();
+            // Update buffer with translated output.
+            buffer.update(getOuputedText());
+        }
+    }
+
+    private class CollectTask extends AsyncTask<Pair<String, String>, Void, Void>{
+
+        @Override
+        protected Void doInBackground(Pair<String, String>... pairs) {
+         /*
+            TODO: Save training data pair (X,Y) to the device.
+          */
+         return null;
+        }
+    }
+
+    private class PushTask extends AsyncTask<Void, Void, Void>{
+
+        @Override
+        protected Void doInBackground(Void... voids) {
+            /*
+                TODO: Send the collected training data pairs to the central server.
+             */
+            return null;
         }
     }
 }
