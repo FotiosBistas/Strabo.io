@@ -1,5 +1,6 @@
 "use strict"
 const express = require('express')
+const express_rate_limit = require('express-rate-limit')
 const https = require('https');
 const app = express();
 require("dotenv").config(); 
@@ -52,24 +53,18 @@ app.get('/Model', (req,res) => {
     
 })
 
-
-/**
- * When a user starts using the dictionary 
- * an identifier for the session (TODO I don't know what session means yet)
- * is assigned to them  
- */
-app.post('/Login', (request, result) => {
-    let userID = {sessionId: uuidv4()};
-    log(userID);
+const batch_limiter = express_rate_limit.rateLimit({
+    windowMs: 5 * 60 * 1000, //retry in 5 minutes  
+    max: 2, //maximum batches received in 5 minutes 
+    message: "Too many batches sent in 5 minutes. Try again later", 
+    standardHeaders: true, 
 })
-
-
 
 /**
  * Receiving batches of translated and non-translated data 
  * along with user ID. 
  */
-app.post('/Batch', async (request,result) =>{
+app.post('/Batch', batch_limiter,async (request,result) =>{
     log("Received batch in http server"); 
     const {uid,batch} = request.body;
  
@@ -80,9 +75,6 @@ app.post('/Batch', async (request,result) =>{
     try{
         let database_structs = batch_utilities.processBatch(batch);
         mongoDBinteractions.addStructToDatabase(database_structs);
-        for(let i = 0; i < database_structs.length; i++){
-            batch_processing.decryptData(database_structs[i]);
-        }
         log("Processed batch successfully")
         // send a response
         result.status(200).send('Received batch data');
