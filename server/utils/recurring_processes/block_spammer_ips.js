@@ -3,6 +3,10 @@
 
 let spammer_ips = new Map(); 
 
+module.exports = {
+  spammer_ips: spammer_ips
+};
+
 const schedule = require('node-schedule');
 const fs = require('fs');
 const path = require('path');
