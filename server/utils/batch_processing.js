@@ -42,7 +42,13 @@ module.exports = {
      */
     processBatch(batch){
         let database_structs = [] 
-        batch.forEach(translation_struct => {
+
+        //ensure the batch is received with proper structure 
+        batch
+        .filter(
+            (translation_struct) => ((translation_struct.hasOwnProperty('translated'))) && ((translation_struct.hasOwnProperty('non_translated'))))
+        .forEach(translation_struct => {
+
             let translated_words = this.wordTokenizer(translation_struct.translated);
             let translated_sentences = this.sentenceTokenizer(translation_struct.translated);
             let non_translated_words = this.wordTokenizer(translation_struct.non_translated);
