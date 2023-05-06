@@ -1,9 +1,6 @@
 //produces a day dictionary based on the previous day's database inputs 
 //and the general inputs 
 
-
-
-const {PythonShell} = require('python-shell'); 
 const schedule = require('node-schedule'); 
 const path = require('path');
 const parent_dir = path.join(__dirname, '..');
@@ -25,7 +22,6 @@ const TODAYS_DATA_WEIGHT = 0.6;
 //maps to count word occurences and weighted average
 const today_word_map = new Map(); 
 const rest_word_map = new Map(); 
-const weighted_average_map = new Map(); 
 
 
 async function createDailyDictionary(){

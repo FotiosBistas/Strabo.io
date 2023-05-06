@@ -3,16 +3,16 @@ const express = require('express')
 const express_rate_limit = require('express-rate-limit')
 const https = require('https');
 const app = express();
+const morgan = require('morgan');
+const fs = require('fs');
+const path = require('path');
+
+
 require("dotenv").config(); 
 require('./utils/process_keys');
 require('./utils/train_model');
 const mongoDBinteractions = require('./mongo_db_api/mongo.js'); 
-const dictionary_interactions = require('./utils/dictionary.js');
 const batch_utilities = require('./utils/batch_processing.js'); 
-const produce_dictionary = require('./utils/produce_dictionary.js');
-const { v4: uuidv4 } = require('uuid'); 
-const batch_processing = require('./utils/batch_processing.js');
-
 
 
 
@@ -53,12 +53,28 @@ app.get('/Model', (req,res) => {
     
 })
 
+const accessLogStream = fs.createWriteStream(path.join(__dirname, 'access.log'), { flags: 'a' });
+
+const logRequest = morgan(function (tokens, req, res) {
+  return [
+    tokens.date(req, res),
+    req.ip,
+    tokens.method(req, res),
+    tokens.url(req, res),
+    tokens.status(req, res),
+    tokens.res(req, res, 'content-length'), '-',
+    tokens['response-time'](req, res), 'ms'
+  ].join(' ')
+}, { stream: accessLogStream });
+
 const batch_limiter = express_rate_limit.rateLimit({
     windowMs: 5 * 60 * 1000, //retry in 5 minutes  
     max: 2, //maximum batches received in 5 minutes 
     message: "Too many batches sent in 5 minutes. Try again later", 
     standardHeaders: true, 
 })
+
+app.use(logRequest);
 
 /**
  * Receiving batches of translated and non-translated data 
