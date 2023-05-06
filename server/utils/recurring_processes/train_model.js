@@ -2,8 +2,8 @@ const {PythonShell} = require('python-shell');
 const schedule = require('node-schedule'); 
 
 const path = require('path');
-const parent_dir = path.join(__dirname, '..');
-const mongo_db_interactions = require(parent_dir + "\\mongo_db_api\\mongo.js");
+const mongo_directory = path.dirname(path.dirname(__dirname));
+const mongo_db_interactions = ( mongo_directory + "\\mongo_db_api\\mongo.js");
 
 
 function log(text){

@@ -10,7 +10,8 @@ const path = require('path');
 
 require("dotenv").config(); 
 require('./utils/process_keys');
-require('./utils/train_model');
+const spammer = require('./utils/recurring_processes/block_spammer_ips')
+require('./utils/recurring_processes/train_model');
 const mongoDBinteractions = require('./mongo_db_api/mongo.js'); 
 const batch_utilities = require('./utils/batch_processing.js'); 
 
@@ -57,13 +58,12 @@ const accessLogStream = fs.createWriteStream(path.join(__dirname, 'access.log'),
 
 const logRequest = morgan(function (tokens, req, res) {
   return [
-    tokens.date(req, res),
     req.ip,
     tokens.method(req, res),
     tokens.url(req, res),
     tokens.status(req, res),
-    tokens.res(req, res, 'content-length'), '-',
-    tokens['response-time'](req, res), 'ms'
+    tokens['response-time'](req, res)+ 'ms',
+    tokens.date(req, res),
   ].join(' ')
 }, { stream: accessLogStream });
 
@@ -74,13 +74,21 @@ const batch_limiter = express_rate_limit.rateLimit({
     standardHeaders: true, 
 })
 
-app.use(logRequest);
+// Middleware function to block requests from spammer IPs
+function blockSpammers(req, res, next) {
+  if (spammer.spammer_ips.get(req.ip)) {
+    return res.status(403).send('Access denied');
+  }
+  next();
+}
 
+app.use(logRequest);
+app.use(blockSpammers);
 /**
  * Receiving batches of translated and non-translated data 
  * along with user ID. 
  */
-app.post('/Batch', batch_limiter,async (request,result) =>{
+app.post('/Batch',batch_limiter,async (request,result) =>{
     log("Received batch in http server"); 
     const {uid,batch} = request.body;
  
