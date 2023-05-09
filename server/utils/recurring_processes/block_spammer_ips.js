@@ -10,11 +10,16 @@ module.exports = {
 const schedule = require('node-schedule');
 const fs = require('fs');
 const path = require('path');
-// Schedule the findSpammers function to run every minute can adjust
+// Schedule the findSpammers function to run every rate limiter time 
 const job = schedule.scheduleJob('*/1 * * * *', findSpammers);
+const insert_spammers_into_db = schedule.scheduleJob('*/1 * * * *',insertSpammersIntoDb)
 
 const parent_dir = path.dirname(path.dirname(__dirname))
 
+
+function insertSpammersIntoDb(){
+
+}
 
 // Function to read the access log file and find spammer IPs
 function findSpammers() {
@@ -25,8 +30,8 @@ function findSpammers() {
     // Find IPs that made too many requests in a short period of time
     const ipCounts = {};
     const lines = accessLog.split('\n');
-    for (let i = 0; i < lines.length; i++) {
-        const fields = lines[i].split(' ');
+    for (const element of lines) {
+        const fields = element.split(' ');
         const ip = fields[0];
         const status_code = fields[3];
         if (status_code === '429') {
