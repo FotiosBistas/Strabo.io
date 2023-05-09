@@ -11,7 +11,7 @@ function log(text){
     console.log("[" + time + "] " + " " + text)
 }
 
-const job = schedule.scheduleJob( {hour: 00, minute: 00}, runTrainScript);// TODO adjust times now runs at each midnight 
+const job = schedule.scheduleJob( "*/1 * * * *", runTrainScript);// TODO adjust times now runs at each midnight 
 
 function runTrainScript(){
 
