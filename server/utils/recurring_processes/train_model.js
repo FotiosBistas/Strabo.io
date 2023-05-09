@@ -1,5 +1,6 @@
 const {PythonShell} = require('python-shell'); 
 const schedule = require('node-schedule'); 
+const lodash = require('lodash');
 
 const path = require('path');
 const mongo_directory = path.dirname(path.dirname(__dirname));
@@ -21,12 +22,16 @@ function runTrainScript(){
     // Retrieve the parallel data from mongodb
     const results = mongo_db_interactions.retrieveData("UserData", "Translated_and_non", "{}, { translated: 1, _id: 0 }");
     
-    const translatedList = [];
+    let translatedList = [];
     // Load data into lists
     results.forEach(item => {
         translatedList.push(item.translated);
     });
 
+    // Shuffle list
+    const shuffledList = lodash.shuffle(translatedList);
+  
+    /*
     // Split to 2000-item batches 
     const batchSize = 2000;
     const translatedBatches = [];
@@ -36,22 +41,19 @@ function runTrainScript(){
     const translatedBatch = translatedList.slice(i, i + batchSize);
     translatedBatches.push(translatedBatch);
     }
+     */
+    // Run training script
+    let options = {
+        mode: 'text', 
+        pythonOptions: ['-u'], //print results 
+        scriptPath: './utils/python_scripts', 
+        args:[translatedBatches[i]]
+    }
 
-    // Run training for each batch
-    for (let i = 0; i < translatedBatches.length; i++) {
-
-        let options = {
-            mode: 'text', 
-            pythonOptions: ['-u'], //print results 
-            scriptPath: './utils/python_scripts', 
-            args:[translatedBatches[i]] //TODO add necessary enviroment variables these can be the batches 
-        }
-
-        PythonShell.run('train_model.py', options).then(messages => {
-            console.log(JSON.stringify(messages));
-            console.log('finished');
-        });
-    }   
+    PythonShell.run('train_model.py', options).then(messages => {
+        console.log(JSON.stringify(messages));
+        console.log('finished');
+    });
 }
 
 
