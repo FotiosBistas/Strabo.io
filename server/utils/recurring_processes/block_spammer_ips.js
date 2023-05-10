@@ -7,6 +7,12 @@ module.exports = {
   spammer_ips: spammer_ips
 };
 
+
+function log(text){
+    let time = new Date(); 
+    console.log("[" + time + "] " + " " + text)
+}
+
 const schedule = require('node-schedule');
 const fs = require('fs');
 const path = require('path');
@@ -24,6 +30,7 @@ function insertSpammersIntoDb(){
 // Function to read the access log file and find spammer IPs
 function findSpammers() {
 
+    log("Reading access log file to block spammers");
    // Read the access log file
     const accessLog = fs.readFileSync(parent_dir + '\\access.log', 'utf8');
 
@@ -40,7 +47,7 @@ function findSpammers() {
             if (ipCounts[ip] >= 3 && !spammer_ips.has(ip)) {
                 // Add the IP to the map if it has exceeded the threshold
                 spammer_ips.set(ip, true);
-                console.log(`Blocked IP: ${ip}`);
+                log(`Blocked IP due to spam: ${ip}`);
             }
         }
     } 

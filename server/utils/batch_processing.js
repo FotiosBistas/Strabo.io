@@ -114,7 +114,7 @@ module.exports = {
 
         for(const [key,value] of Object.entries(database_struct)){
             
-            log(`Key: ${key}: value: ${value}`);
+            //log(`Key: ${key}: value: ${value}`);
 
             if(non_needed_encryption_fields.includes(key)){
                 encrypted_struct[key] = value;
@@ -127,7 +127,7 @@ module.exports = {
                 encryptable_string = value.toString(); 
             }
 
-            log("Encryptable string is: " + encryptable_string);
+            //log("Encryptable string is: " + encryptable_string);
 
             let iv = crypto.randomBytes(IV_LENGTH);
             let cipher = crypto.createCipheriv(algorithm, Buffer.from(private_key, 'hex'), iv); 
@@ -156,7 +156,7 @@ module.exports = {
 
         for(const [key,value] of Object.entries(encrypted_struct)){
             
-            log(`Key: ${key}: value: ${value}`);
+            //log(`Key: ${key}: value: ${value}`);
 
             if(non_needed_decryption_fields.includes(key)){
                 decrypted_struct[key] = value;
@@ -165,7 +165,7 @@ module.exports = {
 
             let decryptable_string = value; 
 
-            log("Decryptable string is: " + decryptable_string);
+            //log("Decryptable string is: " + decryptable_string);
 
             let iv = decryptable_string.slice(0,IV_LENGTH * 2); 
             let iv_buffer = Buffer.from(iv,'hex');

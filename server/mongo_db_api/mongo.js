@@ -58,11 +58,14 @@ module.exports = {
      * @param {*} dbname the database name  
      * @param {*} collection the collection we are going to retrieve the documents from  
      * @param {*} query the query that filters the documents chosen  
+     * @param {*} projection receive the only data needed from the database  
+     * @param {*} options extra options for the query behavior
      * @returns the documents matching the query 
      */
-    retrieveData: async function(dbname, collection, query ){
+    retrieveData: async function(dbname, collection, query, projection, options){
         try{
-            const cursor = await client.db(dbname).collection(collection).find(query);
+            //const values = Object.values(query); 
+            const cursor = await client.db(dbname).collection(collection).find(query,projection,options);
             const documents = await cursor.toArray(); 
             return documents;
         }catch(err){

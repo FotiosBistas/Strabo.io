@@ -11,7 +11,8 @@ const path = require('path');
 require("dotenv").config(); 
 require('./utils/process_keys');
 const spammer = require('./utils/recurring_processes/block_spammer_ips')
-require('./utils/recurring_processes/train_model');
+require('./utils/recurring_processes/train_model.js');
+require('./utils/recurring_processes/produce_dictionary.js')
 const mongoDBinteractions = require('./mongo_db_api/mongo.js'); 
 const batch_utilities = require('./utils/batch_processing.js'); 
 
@@ -69,7 +70,7 @@ const logRequest = morgan(function (tokens, req, res) {
 
 const batch_limiter = express_rate_limit.rateLimit({
     windowMs: 5 * 60 * 1000, //retry in 5 minutes  
-    max: 2, //maximum batches received in 5 minutes 
+    max: 1, //maximum batches received in 5 minutes 
     message: "Too many batches sent in 5 minutes. Try again later", 
     standardHeaders: true, 
 })
