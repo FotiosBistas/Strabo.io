@@ -22,7 +22,14 @@ const insert_spammers_into_db = schedule.scheduleJob('*/1 * * * *',insertSpammer
 const parent_dir = path.dirname(path.dirname(__dirname))
 const mongo_db_interactions = require( parent_dir + "\\mongo_db_api\\mongo.js");
 
+async function retrieveSpammersFromDB(){
+  const data = await mongo_db_interactions.retrieveData('UserData','SpammerIPS',{}); 
+  
+  data.forEach(element => {
+    spammer_ips.set(element.IP,element.spammer);
+  });
 
+}
 
 // Inserts spammers from the map into the database 
 async function insertSpammersIntoDb() {
@@ -70,3 +77,5 @@ function findSpammers() {
     // Clear the access log file
     fs.truncateSync(parent_dir + '/access.log', 0);
 }
+
+retrieveSpammersFromDB(); 
