@@ -94,7 +94,22 @@ module.exports = {
             log("Error while inserting documents into database: " + err);
         }    
     },
+    
 
+    isIPcontained: async function(ip) {
+        try {
+            const db = client.db('UserData');
+            const collection = db.collection('SpammerIPS');
+
+            const query = { IP: ip };
+            const result = await collection.findOne(query);
+
+            return result !== null; // Return true if the IP is contained in the database, false otherwise
+        } catch (err) {
+            log("Error while searching for IP in the database: " + err);
+            return false; // Return false in case of an error
+        }
+    },
 
     /**
      * When server shutdowns it closes connection with the mongodb database. 

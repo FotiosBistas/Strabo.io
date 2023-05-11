@@ -25,14 +25,23 @@ const mongo_db_interactions = require( parent_dir + "\\mongo_db_api\\mongo.js");
 
 
 // Inserts spammers from the map into the database 
-function insertSpammersIntoDb(){
+async function insertSpammersIntoDb() {
+  log("Inserting spammers into the database");
+  const spammerJSON = Object.fromEntries(spammer_ips);
+  const dataArray = Object.entries(spammerJSON).map(([key, value]) => ({ IP: key, spammer: value }));
 
-    log("Inserting spammers into the database"); 
-    const spammerJSON = Object.fromEntries(spammer_ips);
-    const dataArray = Object.entries(spammerJSON).map(([key, value]) => ({ IP: key, spammer: value }));
-    mongo_db_interactions.insertData("UserData","SpammerIPS",dataArray);
+  filteredArray = []; 
+  
+  for(const element of dataArray){
+    result = await mongo_db_interactions.isIPcontained(element.IP); 
+    if(!result){
+      filteredArray.push(element);
+    }
+  }
+
+
+  mongo_db_interactions.insertData("UserData", "SpammerIPS", filteredArray);
 }
-
 
 // Function to read the access log file and find spammer IPs
 function findSpammers() {
