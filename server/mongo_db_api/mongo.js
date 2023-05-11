@@ -62,10 +62,9 @@ module.exports = {
      * @param {*} options extra options for the query behavior
      * @returns the documents matching the query 
      */
-    retrieveData: async function(dbname, collection, query, projection, options){
+    retrieveData: async function(dbname, collectionName, query, projection, options){
         try{
-            //const values = Object.values(query); 
-            const cursor = await client.db(dbname).collection(collection).find(query,projection,options);
+            const cursor = await client.db(dbname).collection(collectionName).find(query,projection,options);
             const documents = await cursor.toArray(); 
             return documents;
         }catch(err){
@@ -73,6 +72,27 @@ module.exports = {
             return err; 
         }
 
+    },
+
+    /**
+     *  Inserts the data given in the parameter into the database.  
+     * @param {*} dbname database name to insert the data to 
+     * @param {*} collection collection name to insert the data to 
+     * @param {*} data data in the array form of a JSON format 
+     */
+    insertData: async function(dbname, collectionName, data){
+        try{
+            if(data.length == 0){
+                log("Received empty data to insert");
+                return 
+            }
+            const db = client.db(dbname);
+            const coll = db.collection(collectionName);
+            const result = await coll.insertMany(data);
+            log("Documents inserted into db: " + result.count);
+        }catch(err){
+            log("Error while inserting documents into database: " + err);
+        }    
     },
 
 

@@ -19,13 +19,20 @@ const path = require('path');
 // Schedule the findSpammers function to run every rate limiter time 
 const job = schedule.scheduleJob('*/1 * * * *', findSpammers);
 const insert_spammers_into_db = schedule.scheduleJob('*/1 * * * *',insertSpammersIntoDb)
-
 const parent_dir = path.dirname(path.dirname(__dirname))
+const mongo_db_interactions = require( parent_dir + "\\mongo_db_api\\mongo.js");
 
 
+
+// Inserts spammers from the map into the database 
 function insertSpammersIntoDb(){
 
+    log("Inserting spammers into the database"); 
+    const spammerJSON = Object.fromEntries(spammer_ips);
+    const dataArray = Object.entries(spammerJSON).map(([key, value]) => ({ IP: key, spammer: value }));
+    mongo_db_interactions.insertData("UserData","SpammerIPS",dataArray);
 }
+
 
 // Function to read the access log file and find spammer IPs
 function findSpammers() {
