@@ -38,14 +38,13 @@ async function insertSpammersIntoDb() {
   const dataArray = Object.entries(spammerJSON).map(([key, value]) => ({ IP: key, spammer: value }));
 
   filteredArray = []; 
-  
+  //spammer IPs are loaded into the map at the start of the server  
   for(const element of dataArray){
-    result = await mongo_db_interactions.isIPcontained(element.IP); 
+    const result = spammer_ips.has(element.IP); 
     if(!result){
       filteredArray.push(element);
     }
   }
-
 
   mongo_db_interactions.insertData("UserData", "SpammerIPS", filteredArray);
 }
