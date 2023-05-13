@@ -1,13 +1,15 @@
 const crypto = require('crypto');
 const process_keys = require('./process_keys.js');
 const dictionary = require('./dictionary.js');
+const spam_data = require('./spam_data_detection.js');
+
+
 
 function log(text){
     let time = new Date(); 
     console.log("[" + time.toLocaleTimeString() + "] " + " " + text)
 }
 
-//consts 
 
 //used to determine whether a new sample should be added to the database 
 MATCH_SCORE_THRESHOLD = 0.6; 
@@ -47,12 +49,18 @@ module.exports = {
         batch
         .filter(
             (translation_struct) => ((translation_struct.hasOwnProperty('translated'))) && ((translation_struct.hasOwnProperty('non_translated'))))
-        .forEach(translation_struct => {
+        .forEach(translation_struct => async function(){
 
             let translated_words = this.wordTokenizer(translation_struct.translated);
             let translated_sentences = this.sentenceTokenizer(translation_struct.translated);
             let non_translated_words = this.wordTokenizer(translation_struct.non_translated);
             let non_translated_sentences = this.sentenceTokenizer(translation_struct.non_translated);
+
+            let non_erroneous_sentence = await spam_data.spellCheckWords(translated_words);
+
+            if(!non_erroneous_sentence){
+                return;
+            }
 
             let today = new Date(); 
             let timestamp = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 2).toISOString().split('T')[0];//TODO probably not needed in the end, helps to debug 

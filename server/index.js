@@ -12,7 +12,8 @@ require("dotenv").config();
 require('./utils/process_keys');
 const spammer = require('./utils/recurring_processes/block_spammer_ips')
 require('./utils/recurring_processes/train_model.js');
-require('./utils/recurring_processes/produce_dictionary.js')
+require('./utils/recurring_processes/produce_dictionary.js');
+require('./utils/spam_data_detection.js');
 const mongoDBinteractions = require('./mongo_db_api/mongo.js'); 
 const batch_utilities = require('./utils/batch_processing.js'); 
 
