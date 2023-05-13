@@ -7,7 +7,7 @@ json_object = {
     'batch': [
         {
             'non_translated': "Pw pw ante na doulepsei to spell checker asdfsadfasdkfk",
-            'translated': "Πω πω άντε να δουλέψι το spell checker ασδφσαδφασδκφκ asdfsadfasdkfk", 
+            'translated': "Πω πω άντε να δουλέψι το spell checker ασδφσαδφασδκφκ", 
         },
         {
             'non_translated': "O Xarhs einai kalo paidi;Etsi; Nomizw pws einai.",

@@ -42,23 +42,24 @@ module.exports = {
      * @param {*} batch 
      * @returns the processed batches along with metadata
      */
-    processBatch(batch){
+    async processBatch(batch){
         let database_structs = [] 
 
         //ensure the batch is received with proper structure 
-        batch
+        batch = batch
         .filter(
-            (translation_struct) => ((translation_struct.hasOwnProperty('translated'))) && ((translation_struct.hasOwnProperty('non_translated'))))
-        .forEach(translation_struct => async function(){
+            (translation_struct) => ((translation_struct.hasOwnProperty('translated'))) && ((translation_struct.hasOwnProperty('non_translated')))
+            )
 
+        for(const translation_struct of batch){
             let translated_words = this.wordTokenizer(translation_struct.translated);
             let translated_sentences = this.sentenceTokenizer(translation_struct.translated);
             let non_translated_words = this.wordTokenizer(translation_struct.non_translated);
             let non_translated_sentences = this.sentenceTokenizer(translation_struct.non_translated);
 
-            let non_erroneous_sentence = await spam_data.spellCheckWords(translated_words);
+            let error_rate = await spam_data.spellCheckWords(translated_words);
 
-            if(!non_erroneous_sentence){
+            if(!error_rate){
                 return;
             }
 
@@ -79,7 +80,8 @@ module.exports = {
                 "number_of_sentences": translated_sentences.length,
                 "timestamp": timestamp, //TODO probably not needed in the end, helps to debug 
                 "translated": translation_struct.translated, 
-                "non_translated": translation_struct.non_translated
+                "non_translated": translation_struct.non_translated,
+                "wrong_percentage": parseFloat(error_rate), 
             };
 
             //determine whether new sample should be inserted into the database 
@@ -92,7 +94,7 @@ module.exports = {
                     database_structs.push(encrypted_struct);
                 };
             }
-        })
+        }
         log("Rough size of object is: " + this.roughSizeOfObject(database_structs) + " bytes");
         return database_structs;
     },
@@ -102,8 +104,8 @@ module.exports = {
      * @param {*} translation_struct
      * @returns 
      */
-    sentenceTokenizer( translation_struct){
-        let result = translation_struct.match( /[^\.;!\?]+[\.;!\?]+/g );
+    sentenceTokenizer(translation_struct) {
+        let result = translation_struct.match(/[^\.;!\?]+[\.;!\?]+|[^;!\?\.]+$/g);
         return result;
     },
 
@@ -118,7 +120,7 @@ module.exports = {
         let encrypted_struct = {}; 
 
 
-        non_needed_encryption_fields = ['timestamp', 'number_of_sentences', 'number_of_words'];  
+        non_needed_encryption_fields = ['timestamp', 'number_of_sentences', 'wrong_percentage','number_of_words'];  
 
         for(const [key,value] of Object.entries(database_struct)){
             
@@ -160,7 +162,7 @@ module.exports = {
         let decrypted_struct = {}; 
 
 
-        non_needed_decryption_fields = ['timestamp', 'number_of_sentences', '_id', 'number_of_words'];  
+        non_needed_decryption_fields = ['timestamp', 'number_of_sentences', 'wrong_percentage','_id', 'number_of_words'];  
 
         for(const [key,value] of Object.entries(encrypted_struct)){
             

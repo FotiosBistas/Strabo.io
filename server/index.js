@@ -99,8 +99,8 @@ app.post('/Batch',batch_limiter,async (request,result) =>{
     // do something with the data
     log({uid,batch});
     try{
-        let database_structs = batch_utilities.processBatch(batch);
-        mongoDBinteractions.addStructToDatabase(database_structs);
+        let database_structs = await batch_utilities.processBatch(batch);
+        await mongoDBinteractions.addStructToDatabase(database_structs);
         log("Processed batch successfully")
         // send a response
         result.status(200).send('Received batch data');
