@@ -29,7 +29,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 import gr.aueb.straboio.R;
-import gr.aueb.straboio.keyboard.support.Buffer;
+import gr.aueb.straboio.keyboard.support.Sentence;
+import gr.aueb.straboio.keyboard.support.Word;
 import gr.aueb.straboio.model.LanguageModel;
 import gr.aueb.straboio.model.LanguageModelLSTM;
 import gr.aueb.straboio.model.Model;
@@ -53,7 +54,7 @@ public class StraboKeyboard extends InputMethodService implements KeyboardView.O
 
     private LanguageModel translator = null;
     private StringBuilder transInput = new StringBuilder("");
-    private Buffer buffer;
+    private Sentence sentence;
 
     private boolean aiIsON = true;
     private boolean backSpaceWasPressed = false;
@@ -66,7 +67,10 @@ public class StraboKeyboard extends InputMethodService implements KeyboardView.O
             if (!isEnglish) {
                 iconn.commitText(((Character) keymapper.toSPECIAL(targetcode)).toString(), 1);
                 // Cache special character to buffer
-                buffer.push(((Character) keymapper.toSPECIAL(targetcode)).toString(), getActualCursorPosition());
+                sentence.insertChar(
+                        ((Character) keymapper.toSPECIAL(targetcode)).toString(),
+                        getActualCursorPosition()
+                );
                 wasLongPressed = !wasLongPressed;
 
             }
@@ -79,11 +83,12 @@ public class StraboKeyboard extends InputMethodService implements KeyboardView.O
         @Override
         public void onReceive(Context context, Intent intent) {
             // Handle NOTIFY_VIEW_TEXT_SELECTION_CHANGED:
-            String potentialEmptyText = getCurrentInputConnection().getExtractedText(new ExtractedTextRequest(), 0).text.toString();
-            if(potentialEmptyText.equals("") && !backSpaceWasPressed){
+            ExtractedText et = getCurrentInputConnection().getExtractedText(new ExtractedTextRequest(), 0);
+            String potentialEmptyText = (et!=null) ? et.text.toString() : "";
+            if(potentialEmptyText.equals("")){
                 // TODO: Save training pair.
-                Log.d("CACHED", buffer.toString());
-                buffer.flush();
+                Log.d("CACHED", sentence.toString());
+                sentence.erase();
                 transInput = new StringBuilder();
             }
         }
@@ -129,7 +134,7 @@ public class StraboKeyboard extends InputMethodService implements KeyboardView.O
                 new IntentFilter("gr.aueb.straboio.NOTIFY_VIEW_TEXT_SELECTION_CHANGED")
         );
         // Setup training data collector buffer.
-        buffer = new Buffer();
+        sentence = new Sentence();
     }
 
     @Override
@@ -167,8 +172,10 @@ public class StraboKeyboard extends InputMethodService implements KeyboardView.O
         switch (i) {
             case Keyboard.KEYCODE_DELETE:
                 iconn.deleteSurroundingText(1, 0);
-                // Delete from character from character's raw input:
-                buffer.push("BSP", getActualCursorPosition());
+                // Delete character from buffer:
+                sentence.delete(
+                        getActualCursorPosition()
+                );
                 if (aiIsON)
                     if (transInput.length() > 0)
                         transInput.deleteCharAt(transInput.length() - 1);
@@ -199,10 +206,6 @@ public class StraboKeyboard extends InputMethodService implements KeyboardView.O
                 iconn.commitText(characterToOutput, 1);
                 if (wasLongPressed) {
                     iconn.deleteSurroundingText(1, 0);
-                    wasLongPressed = !wasLongPressed;
-                } else {
-                    if(isEnglish)
-                        buffer.push(characterToOutput, getActualCursorPosition());
                 }
 
 
@@ -214,15 +217,23 @@ public class StraboKeyboard extends InputMethodService implements KeyboardView.O
                 if (aiIsON && isEnglish) {
                     transInput.append(characterToOutput);
                     // Translate:
-                    if (code == 32 && isEnglish) {
-                        // Update buffer with translated output.
-                        this.buffer.update(getOuputedText());
-                        new CorrectTask().execute(iconn.getExtractedText(new ExtractedTextRequest(), 0).text.subSequence(0,getActualCursorPosition()).toString(), new StringBuilder(transInput).toString());
+                    if (code == 32 && isEnglish) { // SPACE was pressed and is english
+                        if(!transInput.toString().equals(" "))
+                            new CorrectTask().execute(iconn.getExtractedText(new ExtractedTextRequest(), 0).text.subSequence(0,getActualCursorPosition()).toString(), new StringBuilder(transInput).toString());
                         transInput = new StringBuilder("");
                     } else if (code == 32) {
                         transInput = new StringBuilder("");
                     }
+                } else {
+                    if(!wasLongPressed){
+                        sentence.insertChar(
+                                characterToOutput,
+                                getActualCursorPosition()
+                        );
+                    }
                 }
+                // Reset long press detection
+                wasLongPressed = false;
         }
     }
 
@@ -355,7 +366,17 @@ public class StraboKeyboard extends InputMethodService implements KeyboardView.O
             );
             iconn.finishComposingText();
             // Update buffer with translated output.
-            buffer.update(getOuputedText());
+            targetTransInput = targetTransInput.replace(" ", "");
+            transOutput = transOutput.replace(" ", "");
+
+            Word newWord = new Word(
+                    new StringBuilder(targetTransInput),
+                    new StringBuilder(transOutput),
+                    textUpUntilThatPoint.substring(0, end).length() + 1,
+                    textUpUntilThatPoint.substring(0, end).length() + transOutput.length()
+            );
+
+            sentence.insertWord(newWord);
         }
     }
 
