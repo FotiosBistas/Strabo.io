@@ -23,7 +23,7 @@ module.exports = {
     connectToDatabase: async function(){
         try{
             await client.connect();
-            log("Opened new connection successfully");
+            log("Opened new database connection successfully");
         }catch(err){
             log("Couldn't connect to database: " + err);
         }    

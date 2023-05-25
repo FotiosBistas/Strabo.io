@@ -92,12 +92,12 @@ app.use(blockSpammers);
  */
 app.post('/Batch',batch_limiter,async (request,result) =>{
     log("Received batch in http server"); 
-    const {uid,batch} = request.body;
+    const {batch} = request.body;
  
     //batch should be two arrays the translated and non translated data
 
     // do something with the data
-    log({uid,batch});
+    log({batch});
     try{
         let database_structs = await batch_utilities.processBatch(batch);
         await mongoDBinteractions.addStructToDatabase(database_structs);
