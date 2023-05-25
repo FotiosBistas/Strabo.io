@@ -12,7 +12,6 @@ import android.os.AsyncTask;
 import android.os.Handler;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
-import android.util.Pair;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.inputmethod.ExtractedText;
@@ -20,7 +19,6 @@ import android.view.inputmethod.ExtractedTextRequest;
 import android.view.inputmethod.InputConnection;
 import android.widget.Toast;
 
-import org.json.JSONArray;
 import org.json.JSONObject;
 import org.pytorch.Module;
 
@@ -60,7 +58,6 @@ public class StraboKeyboard extends InputMethodService implements KeyboardView.O
     private Sentence sentence;
 
     private boolean aiIsON = true;
-    private boolean backSpaceWasPressed = false;
 
     private Runnable mLongPressed = new Runnable() {
         public void run() {
@@ -185,25 +182,20 @@ public class StraboKeyboard extends InputMethodService implements KeyboardView.O
                 if (aiIsON)
                     if (transInput.length() > 0)
                         transInput.deleteCharAt(transInput.length() - 1);
-                backSpaceWasPressed = true;
                 break;
             case Keyboard.KEYCODE_SHIFT:
                 isCaps = !isCaps;
                 keyboard.setShifted(isCaps);
                 kview.invalidateAllKeys();
-                backSpaceWasPressed = false;
                 break;
             case Keyboard.KEYCODE_DONE:
                 iconn.sendKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_ENTER));
-                backSpaceWasPressed = false;
                 break;
             case -999:
                 isEnglish = !isEnglish;
                 updateAlphabetOfKeyboard();
-                backSpaceWasPressed = false;
                 break;
             default:
-                backSpaceWasPressed = false;
                 char code = (char) i;
                 if(Character.isLetter(code) && isCaps)
                     code = Character.toUpperCase(code);
