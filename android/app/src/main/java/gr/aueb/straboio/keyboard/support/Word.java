@@ -118,7 +118,6 @@ public class Word {
     public void delete(int cursorPosition){
         // WARNING: the cursor index value is the cursor's position after the deletion of the character.
         // Thus, in this case we want to delete the character in position cursorPosition + 1.
-        System.out.println("I am here");
         if(this.wordTranslated.length() != 0){
             this.wordTranslated.deleteCharAt(cursorPosition + 1 - this.boundStart);
             this.boundEnd--;
