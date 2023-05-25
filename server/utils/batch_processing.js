@@ -46,10 +46,7 @@ module.exports = {
         let database_structs = [] 
 
         //ensure the batch is received with proper structure 
-        batch = batch
-        .filter(
-            (translation_struct) => ((translation_struct.hasOwnProperty('translated'))) && ((translation_struct.hasOwnProperty('non_translated')))
-            )
+        batch = batch.filter((translation_struct) => ((translation_struct.hasOwnProperty('translated'))) && ((translation_struct.hasOwnProperty('non_translated'))))
 
         for(const translation_struct of batch){
             let translated_words = this.wordTokenizer(translation_struct.translated);
@@ -93,6 +90,9 @@ module.exports = {
                     let encrypted_struct = this.encryptData(database_struct);
                     database_structs.push(encrypted_struct);
                 };
+            }else{
+                let encrypted_struct = this.encryptData(database_struct);
+                database_structs.push(encrypted_struct);
             }
         }
         log("Rough size of object is: " + this.roughSizeOfObject(database_structs) + " bytes");
