@@ -3,8 +3,9 @@
 
 const schedule = require('node-schedule'); 
 const path = require('path');
-const parent_dir = path.join(__dirname, '..');
-const mongo_db_interactions = require(parent_dir + "\\mongo_db_api\\mongo.js");
+const parent_dir = path.dirname(path.dirname(__dirname))
+
+const mongo_db_interactions = require(parent_dir + "/mongo_db_api/mongo.js");
 const batch_processing = require('../batch_processing.js'); 
 const dictionary = require('../dictionary.js');
 
@@ -13,7 +14,7 @@ function log(text){
     console.log("[" + time + "] " + " " + text)
 }
 
-const job = schedule.scheduleJob('*/2 * * * *', createDailyDictionary)//TODO adjust times now runs at each midnight 
+const job = schedule.scheduleJob('*/1 * * * *', createDailyDictionary)//TODO adjust times now runs at each midnight 
 
 //weights used for the weighted average 
 const PREVIOUS_DATA_WEIGHT = 0.4; 
@@ -61,7 +62,7 @@ async function createDailyDictionary(){
 
     calculateWeightedAverages(today_word_map, rest_word_map); 
 
-    console.log("HI there");
+    log("Calculated weighted averages. Creating new dictionary.");
 
     if(today_word_map.size >= rest_word_map.size){
         dictionary.createNewDictionary(today_word_map);
@@ -71,7 +72,7 @@ async function createDailyDictionary(){
     //empty the maps 
     today_word_map.clear(); 
     rest_word_map.clear(); 
-    console.log("Hi there"); 
+    log("Emptied dictionary maps. Waiting to run create dictionary script again"); 
     
 
 }
@@ -86,12 +87,10 @@ function addCountToWord(word, map){
     //add one to the word occurences
     if(map.has(word)){
         map.set(word, map.get(word) + 1); 
-        log("Word: " + word + " occurences now are: " + map.get(word));
         return 
     }
 
     map.set(word, 1); 
-    log("Word: " + word + " occurences now are: " + map.get(word)); 
 
 }
 

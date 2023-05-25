@@ -1,13 +1,15 @@
 const crypto = require('crypto');
 const process_keys = require('./process_keys.js');
 const dictionary = require('./dictionary.js');
+const spam_data = require('./spam_data_detection.js');
+
+
 
 function log(text){
     let time = new Date(); 
     console.log("[" + time.toLocaleTimeString() + "] " + " " + text)
 }
 
-//consts 
 
 //used to determine whether a new sample should be added to the database 
 MATCH_SCORE_THRESHOLD = 0.6; 
@@ -40,19 +42,23 @@ module.exports = {
      * @param {*} batch 
      * @returns the processed batches along with metadata
      */
-    processBatch(batch){
+    async processBatch(batch){
         let database_structs = [] 
 
         //ensure the batch is received with proper structure 
-        batch
-        .filter(
-            (translation_struct) => ((translation_struct.hasOwnProperty('translated'))) && ((translation_struct.hasOwnProperty('non_translated'))))
-        .forEach(translation_struct => {
+        batch = batch.filter((translation_struct) => ((translation_struct.hasOwnProperty('translated'))) && ((translation_struct.hasOwnProperty('non_translated'))))
 
+        for(const translation_struct of batch){
             let translated_words = this.wordTokenizer(translation_struct.translated);
             let translated_sentences = this.sentenceTokenizer(translation_struct.translated);
             let non_translated_words = this.wordTokenizer(translation_struct.non_translated);
             let non_translated_sentences = this.sentenceTokenizer(translation_struct.non_translated);
+
+            let error_rate = await spam_data.spellCheckWords(translated_words);
+
+            if(!error_rate){
+                return;
+            }
 
             let today = new Date(); 
             let timestamp = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 2).toISOString().split('T')[0];//TODO probably not needed in the end, helps to debug 
@@ -71,7 +77,8 @@ module.exports = {
                 "number_of_sentences": translated_sentences.length,
                 "timestamp": timestamp, //TODO probably not needed in the end, helps to debug 
                 "translated": translation_struct.translated, 
-                "non_translated": translation_struct.non_translated
+                "non_translated": translation_struct.non_translated,
+                "wrong_percentage": parseFloat(error_rate), 
             };
 
             //determine whether new sample should be inserted into the database 
@@ -83,8 +90,11 @@ module.exports = {
                     let encrypted_struct = this.encryptData(database_struct);
                     database_structs.push(encrypted_struct);
                 };
+            }else{
+                let encrypted_struct = this.encryptData(database_struct);
+                database_structs.push(encrypted_struct);
             }
-        })
+        }
         log("Rough size of object is: " + this.roughSizeOfObject(database_structs) + " bytes");
         return database_structs;
     },
@@ -94,8 +104,8 @@ module.exports = {
      * @param {*} translation_struct
      * @returns 
      */
-    sentenceTokenizer( translation_struct){
-        let result = translation_struct.match( /[^\.;!\?]+[\.;!\?]+/g );
+    sentenceTokenizer(translation_struct) {
+        let result = translation_struct.match(/[^\.;!\?]+[\.;!\?]+|[^;!\?\.]+$/g);
         return result;
     },
 
@@ -110,11 +120,11 @@ module.exports = {
         let encrypted_struct = {}; 
 
 
-        non_needed_encryption_fields = ['timestamp', 'number_of_sentences', 'number_of_words'];  
+        non_needed_encryption_fields = ['timestamp', 'number_of_sentences', 'wrong_percentage','number_of_words'];  
 
         for(const [key,value] of Object.entries(database_struct)){
             
-            log(`Key: ${key}: value: ${value}`);
+            //log(`Key: ${key}: value: ${value}`);
 
             if(non_needed_encryption_fields.includes(key)){
                 encrypted_struct[key] = value;
@@ -127,7 +137,7 @@ module.exports = {
                 encryptable_string = value.toString(); 
             }
 
-            log("Encryptable string is: " + encryptable_string);
+            //log("Encryptable string is: " + encryptable_string);
 
             let iv = crypto.randomBytes(IV_LENGTH);
             let cipher = crypto.createCipheriv(algorithm, Buffer.from(private_key, 'hex'), iv); 
@@ -152,11 +162,11 @@ module.exports = {
         let decrypted_struct = {}; 
 
 
-        non_needed_decryption_fields = ['timestamp', 'number_of_sentences', '_id', 'number_of_words'];  
+        non_needed_decryption_fields = ['timestamp', 'number_of_sentences', 'wrong_percentage','_id', 'number_of_words'];  
 
         for(const [key,value] of Object.entries(encrypted_struct)){
             
-            log(`Key: ${key}: value: ${value}`);
+            //log(`Key: ${key}: value: ${value}`);
 
             if(non_needed_decryption_fields.includes(key)){
                 decrypted_struct[key] = value;
@@ -165,7 +175,7 @@ module.exports = {
 
             let decryptable_string = value; 
 
-            log("Decryptable string is: " + decryptable_string);
+            //log("Decryptable string is: " + decryptable_string);
 
             let iv = decryptable_string.slice(0,IV_LENGTH * 2); 
             let iv_buffer = Buffer.from(iv,'hex');
