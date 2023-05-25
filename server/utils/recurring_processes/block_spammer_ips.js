@@ -54,7 +54,7 @@ function findSpammers() {
 
     log("Reading access log file to block spammers");
    // Read the access log file
-    const accessLog = fs.readFileSync(parent_dir + '\\access.log', 'utf8');
+    const accessLog = fs.readFileSync(parent_dir + '/access.log', 'utf8');
 
     // Find IPs that made too many requests in a short period of time
     const ipCounts = {};

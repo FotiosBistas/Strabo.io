@@ -43,7 +43,7 @@ app.use(express.json( {limit:'10mb'})) ;
 
 if(!server){
     log("Could not create https server")
-    server = app.listen(3000, async () =>{
+    server = app.listen(999, async () =>{
         await mongoDBinteractions.connectToDatabase(); 
         log("Listening on port 3000 http server")
     })
