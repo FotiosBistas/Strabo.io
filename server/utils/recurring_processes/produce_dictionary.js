@@ -5,7 +5,7 @@ const schedule = require('node-schedule');
 const path = require('path');
 const parent_dir = path.dirname(path.dirname(__dirname))
 
-const mongo_db_interactions = require(parent_dir + "\\mongo_db_api\\mongo.js");
+const mongo_db_interactions = require(parent_dir + "/mongo_db_api/mongo.js");
 const batch_processing = require('../batch_processing.js'); 
 const dictionary = require('../dictionary.js');
 

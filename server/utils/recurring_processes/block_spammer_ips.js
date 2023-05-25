@@ -20,7 +20,7 @@ const path = require('path');
 const job = schedule.scheduleJob('*/1 * * * *', findSpammers);
 const insert_spammers_into_db = schedule.scheduleJob('*/1 * * * *',insertSpammersIntoDb)
 const parent_dir = path.dirname(path.dirname(__dirname))
-const mongo_db_interactions = require( parent_dir + "\\mongo_db_api\\mongo.js");
+const mongo_db_interactions = require( parent_dir + "/mongo_db_api/mongo.js");
 
 async function retrieveSpammersFromDB(){
   const data = await mongo_db_interactions.retrieveData('UserData','SpammerIPS',{}); 

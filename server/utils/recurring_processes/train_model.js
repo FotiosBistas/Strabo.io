@@ -3,7 +3,7 @@ const schedule = require('node-schedule');
 
 const path = require('path');
 const mongo_directory = path.dirname(path.dirname(__dirname));
-const mongo_db_interactions = require( mongo_directory + "\\mongo_db_api\\mongo.js");
+const mongo_db_interactions = require( mongo_directory + "/mongo_db_api/mongo.js");
 
 function log(text){
     let time = new Date(); 
