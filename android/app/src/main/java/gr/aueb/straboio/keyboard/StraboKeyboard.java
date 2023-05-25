@@ -20,6 +20,8 @@ import android.view.inputmethod.ExtractedTextRequest;
 import android.view.inputmethod.InputConnection;
 import android.widget.Toast;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.pytorch.Module;
 
 import java.io.File;
@@ -29,6 +31,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 import gr.aueb.straboio.R;
+import gr.aueb.straboio.keyboard.storage.CollectedDataManager;
 import gr.aueb.straboio.keyboard.support.Sentence;
 import gr.aueb.straboio.keyboard.support.Word;
 import gr.aueb.straboio.model.LanguageModel;
@@ -86,8 +89,11 @@ public class StraboKeyboard extends InputMethodService implements KeyboardView.O
             ExtractedText et = getCurrentInputConnection().getExtractedText(new ExtractedTextRequest(), 0);
             String potentialEmptyText = (et!=null) ? et.text.toString() : "";
             if(potentialEmptyText.equals("")){
-                // TODO: Save training pair.
-                Log.d("CACHED", sentence.toJSON().toString());
+                // Check if sentence is not empty:
+                if(!sentence.isEmpty()){
+                    CollectedDataManager.getInstance().add(getApplicationContext(), sentence.toJSON());
+                    new CollectTask().execute(sentence.toJSON()); // Use copy constructor to stop next line from erasing the sentence.
+                }
                 sentence.erase();
                 transInput = new StringBuilder();
             }
@@ -380,14 +386,19 @@ public class StraboKeyboard extends InputMethodService implements KeyboardView.O
         }
     }
 
-    private class CollectTask extends AsyncTask<Pair<String, String>, Void, Void>{
+    /**
+     * Collects a training data sentence and stores it asynchronously.
+     */
+    private class CollectTask extends AsyncTask<JSONObject, Void, Void>{
 
         @Override
-        protected Void doInBackground(Pair<String, String>... pairs) {
-         /*
-            TODO: Save training data pair (X,Y) to the device.
-          */
-         return null;
+        protected Void doInBackground(JSONObject... jsonObjects) {
+            JSONObject target = jsonObjects[0];
+            CollectedDataManager.getInstance().add(
+                    getApplicationContext(),
+                    target
+            );
+            return null;
         }
     }
 
