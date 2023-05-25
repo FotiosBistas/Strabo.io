@@ -87,7 +87,7 @@ public class StraboKeyboard extends InputMethodService implements KeyboardView.O
             String potentialEmptyText = (et!=null) ? et.text.toString() : "";
             if(potentialEmptyText.equals("")){
                 // TODO: Save training pair.
-                Log.d("CACHED", sentence.toString());
+                Log.d("CACHED", sentence.toJSON().toString());
                 sentence.erase();
                 transInput = new StringBuilder();
             }

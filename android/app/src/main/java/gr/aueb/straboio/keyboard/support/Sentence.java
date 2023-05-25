@@ -1,5 +1,8 @@
 package gr.aueb.straboio.keyboard.support;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.ArrayList;
 
 public class Sentence {
@@ -234,6 +237,42 @@ public class Sentence {
      */
     public void erase(){
         this.words.clear();
+    }
+
+    public boolean isEmpty(){
+        return this.words.isEmpty();
+    }
+
+    /**
+     * Constructs a JSON object of the sentence containing the constructed raw sentence and
+     * the constructed translated version.
+     * @return JSON object of format: {"raw": "geia sas", "translated": "γεια σας"}
+     */
+    public JSONObject toJSON(){
+        StringBuilder raw = new StringBuilder();
+        StringBuilder translated = new StringBuilder();;
+
+        for(Word w : this.words){
+            raw.append(w.getWordRaw());
+            raw.append(" ");
+            translated.append(w.getWordTranslated());
+            translated.append(" ");
+        }
+
+        // Remove the redundant SPACE character added from the iteration.
+        String rawSentence = raw.substring(0, raw.length()-1);
+        String translatedSentence = translated.substring(0, translated.length()-1);
+
+        JSONObject jsonObject = new JSONObject();
+
+        try {
+            jsonObject.put("raw", rawSentence);
+            jsonObject.put("translated", translatedSentence);
+        } catch (JSONException e) {
+            System.err.println(e);
+        }
+
+        return jsonObject;
     }
 
     @Override
