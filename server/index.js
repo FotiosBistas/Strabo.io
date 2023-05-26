@@ -9,8 +9,8 @@ const path = require('path');
 const PORT = 443; // HTTPS port
 
 const credentials = { 
-  key: fs.readFileSync('./ssl/localkey.pem'), 
-  cert: fs.readFileSync('./ssl/localcert.pem')
+  key: fs.readFileSync('./ssl/key.pem'), 
+  cert: fs.readFileSync('./ssl/cert.pem')
 };
 
 require("dotenv").config(); 
