@@ -1,12 +1,17 @@
 "use strict"
-const express = require('express')
-const express_rate_limit = require('express-rate-limit')
+const express = require('express');
+const express_rate_limit = require('express-rate-limit');
 const https = require('https');
-const app = express();
 const morgan = require('morgan');
 const fs = require('fs');
 const path = require('path');
 
+const PORT = 443; // HTTPS port
+
+const credentials = { 
+  key: fs.readFileSync('./ssl/localkey.pem'), 
+  cert: fs.readFileSync('./ssl/localcert.pem')
+};
 
 require("dotenv").config(); 
 require('./utils/process_keys');
@@ -23,12 +28,10 @@ function log(text){
     let time = new Date(); 
     console.log("[" + time.toLocaleTimeString() + "] " + " " + text)
 }
-let server = null 
-//server = https.createServer(app).listen(3000, () =>{
-//    log("Listening on port 3000 https server")
-//})
 
+let server = null;
 
+const app = express();
 
 app.use(express.static('public'));
 
@@ -39,15 +42,6 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // parse application/json content from body
 app.use(express.json( {limit:'10mb'})) ;
-
-
-if(!server){
-    log("Could not create https server")
-    server = app.listen(999, async () =>{
-        await mongoDBinteractions.connectToDatabase(); 
-        log("Listening on port 3000 http server")
-    })
-}
 
 /**
  * User will request for the model 
@@ -93,11 +87,11 @@ app.use(blockSpammers);
 app.post('/Batch',batch_limiter,async (request,result) =>{
     log("Received batch in http server"); 
     const {batch} = request.body;
- 
+
     //batch should be two arrays the translated and non translated data
 
     // do something with the data
-    log({batch});
+    log(JSON.stringify(batch));
     try{
         let database_structs = await batch_utilities.processBatch(batch);
         await mongoDBinteractions.addStructToDatabase(database_structs);
@@ -120,3 +114,10 @@ process.on('SIGINT',async () => {
       process.exit(0);
     });
 });
+
+if(!server){
+  https.createServer(credentials, app).listen(PORT, async () => {
+    await mongoDBinteractions.connectToDatabase(); 
+    log(`Listening on port ${PORT} https server`);
+  })
+}
