@@ -29,8 +29,10 @@ public class CollectedDataManager {
      * Adds JSONObject of training data to the internal storage.
      * @param c the application context.
      * @param trainingData training pair (raw, translated) of sentence in JSONObject format.
+     * @return the number of data currently stored after the insertion. (-1 means Error)
      */
-    public synchronized void add(Context c, JSONObject trainingData){
+    public synchronized int add(Context c, JSONObject trainingData){
+        int size = -1;
         File dir = new File(c.getFilesDir(), "cache");
 
         if(!dir.exists()){
@@ -63,6 +65,10 @@ public class CollectedDataManager {
                 contentsJSON = new JSONArray(contentBuilder.toString());
             }
 
+            // Save the previous size in order to be able to return it in case an exception occurs:
+            size = contentsJSON.length();
+
+            // Add new pair
             contentsJSON.put(trainingData);
 
             // Save back to file.
@@ -72,10 +78,13 @@ public class CollectedDataManager {
             } catch (IOException e) {
                 throw new Exception("Problem with writing file:\n"+e.getMessage());
             }
+            // if everything went well, the new data was added :
+            size++;
 
         } catch (Exception e){
             System.err.println(e.getMessage());
         }
+        return size;
     }
 
     /**
