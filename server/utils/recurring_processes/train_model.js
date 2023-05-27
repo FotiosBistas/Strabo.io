@@ -1,10 +1,12 @@
-const {PythonShell} = require('python-shell'); 
+const {PythonShell} = require('python-shell');
+const fs = require('fs'); 
 const schedule = require('node-schedule'); 
-const lodash = require('lodash');
+process.env.PYTHONIOENCODING = 'UTF-8';
 
 const path = require('path');
 const mongo_directory = path.dirname(path.dirname(__dirname));
 const mongo_db_interactions = require( mongo_directory + "/mongo_db_api/mongo.js");
+const batch_processing = require(mongo_directory + "/utils/batch_processing.js")
 
 function log(text){
     let time = new Date(); 
@@ -27,9 +29,15 @@ async function runTrainScript(){
         translatedList.push(item.translated);
     });
 
-    // Shuffle list
-    const shuffledList = lodash.shuffle(translatedList);
-  
+    //Decrypt
+    translatedList = batch_processing.decryptData(translatedList);
+    //Turn struct to list
+    translatedList = Object.values(translatedList);
+
+
+    // Write list to temp file
+    fs.writeFileSync('temp.txt', JSON.stringify(translatedList), 'utf8'); 
+
     /*
     // Split to 2000-item batches 
     const batchSize = 2000;
@@ -43,12 +51,14 @@ async function runTrainScript(){
      */
     // Run training script
     let options = {
-        mode: 'text', 
+        mode: 'text',
+        pythonPath: 'C:\\Users\\tatou\\anaconda3\\envs\\pytorch\\python.exe', // path to python env with pytorch
         pythonOptions: ['-u'], //print results 
         scriptPath: './utils/python_scripts', 
-        args:[translatedBatches[i]]
+        args:['temp.txt']
     }
 
+    //PythonShell.run('train_model.py', options).then(messages => {
     PythonShell.run('train_model.py', options).then(messages => {
         console.log(JSON.stringify(messages));
         console.log('finished');
