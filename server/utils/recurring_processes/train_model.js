@@ -52,7 +52,6 @@ async function runTrainScript(){
     // Run training script
     let options = {
         mode: 'text',
-        pythonPath: 'C:\\Users\\tatou\\anaconda3\\envs\\pytorch\\python.exe', // path to python env with pytorch
         pythonOptions: ['-u'], //print results 
         scriptPath: './utils/python_scripts', 
         args:['temp.txt']
