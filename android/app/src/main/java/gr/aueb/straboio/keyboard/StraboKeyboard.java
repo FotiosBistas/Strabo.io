@@ -19,14 +19,35 @@ import android.view.inputmethod.ExtractedTextRequest;
 import android.view.inputmethod.InputConnection;
 import android.widget.Toast;
 
+import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.pytorch.Module;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.security.KeyManagementException;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
+
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManagerFactory;
 
 import gr.aueb.straboio.R;
 import gr.aueb.straboio.keyboard.storage.CollectedDataManager;
@@ -58,6 +79,8 @@ public class StraboKeyboard extends InputMethodService implements KeyboardView.O
     private Sentence sentence;
 
     private boolean aiIsON = true;
+
+    private final int BATCH_SIZE_LIMIT = 5;
 
     private Runnable mLongPressed = new Runnable() {
         public void run() {
@@ -383,24 +406,136 @@ public class StraboKeyboard extends InputMethodService implements KeyboardView.O
      */
     private class CollectTask extends AsyncTask<JSONObject, Void, Void>{
 
+        private int size;
+
         @Override
         protected Void doInBackground(JSONObject... jsonObjects) {
             JSONObject target = jsonObjects[0];
-            CollectedDataManager.getInstance().add(
+            size = CollectedDataManager.getInstance().add(
                     getApplicationContext(),
                     target
             );
             return null;
         }
+
+        @Override
+        protected void onPostExecute(Void unused) {
+            super.onPostExecute(unused);
+            if(size >= BATCH_SIZE_LIMIT){
+                new PushTask().execute();
+            }
+        }
     }
 
+    /**
+     * Pushes the batch to the servers.
+     */
     private class PushTask extends AsyncTask<Void, Void, Void>{
 
         @Override
         protected Void doInBackground(Void... voids) {
-            /*
-                TODO: Send the collected training data pairs to the central server.
-             */
+
+            try {
+                // Create the JSON payload
+                JSONArray batch = CollectedDataManager.getInstance().retrieveData(getApplicationContext());
+                // Flush collected data...
+                CollectedDataManager.getInstance().flush(getApplicationContext());
+
+                // Prepare payload
+                JSONObject jsonPayload = new JSONObject();
+                jsonPayload.put("batch", batch);
+
+                // SSL STUFF:
+                // Load CAs from an InputStream
+                // (could be from a resource or ByteArrayInputStream or ...)
+                CertificateFactory cf = CertificateFactory.getInstance("X.509");
+
+                // My CRT file that I put in the assets folder
+                // I got this file by following these steps:
+                // * Go to https://littlesvr.ca using Firefox
+                // * Click the padlock/More/Security/View Certificate/Details/Export
+                // * Saved the file as littlesvr.crt (type X.509 Certificate (PEM));
+                InputStream caInput = new BufferedInputStream(getAssets().open("cert.der"));
+                Certificate ca = cf.generateCertificate(caInput);
+                System.out.println("ca=" + ((X509Certificate) ca).getSubjectDN());
+
+                // Create a KeyStore containing our trusted CAs
+                String keyStoreType = KeyStore.getDefaultType();
+                KeyStore keyStore = KeyStore.getInstance(keyStoreType);
+                keyStore.load(null, null);
+                keyStore.setCertificateEntry("ca", ca);
+
+                // Create a TrustManager that trusts the CAs in our KeyStore
+                String tmfAlgorithm = TrustManagerFactory.getDefaultAlgorithm();
+                TrustManagerFactory tmf = TrustManagerFactory.getInstance(tmfAlgorithm);
+                tmf.init(keyStore);
+
+                // Create an SSLContext that uses our TrustManager
+                SSLContext sslContext = SSLContext.getInstance("TLS");
+                sslContext.init(null, tmf.getTrustManagers(), null);
+
+                // URL of the API endpoint
+                URL url = new URL(
+                        "https://"+
+                                getResources().getString(R.string.SERVER_ADDR)+
+                                ":"+
+                                getResources().getString(R.string.SERVER_PORT)+
+                                "/Batch"
+                );
+
+                // Create an HTTPS connection
+                HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
+                connection.setSSLSocketFactory(sslContext.getSocketFactory());
+
+                // Set request method to POST
+                connection.setRequestMethod("POST");
+
+                // Set content type and request property
+                connection.setRequestProperty("Content-Type", "application/json");
+
+                // Enable output and disable caching
+                connection.setDoOutput(true);
+                connection.setUseCaches(false);
+
+                // Write the JSON payload to the output stream
+                OutputStreamWriter outputStream = new OutputStreamWriter(connection.getOutputStream(), StandardCharsets.UTF_8);
+                System.out.println(jsonPayload);
+                outputStream.write(jsonPayload.toString());
+                outputStream.flush();
+                outputStream.close();
+
+                // Send the request and retrieve the response code
+                int responseCode = connection.getResponseCode();
+
+                if (responseCode == HttpURLConnection.HTTP_OK) {
+                    // Read the response from the input stream
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+                    StringBuilder response = new StringBuilder();
+                    String line;
+
+                    while ((line = reader.readLine()) != null) {
+                        response.append(line);
+                    }
+
+                    reader.close();
+
+                    // Process the response
+                    String responseData = response.toString();
+                    // ... do something with the response data
+                    System.out.println(responseData);
+                } else {
+                    // Handle error response
+                    System.err.println("Response error: (Code "+responseCode+")");
+
+                }
+
+                // Close the connection
+                connection.disconnect();
+
+            } catch (IOException | JSONException | CertificateException | KeyStoreException | NoSuchAlgorithmException | KeyManagementException e) {
+                e.printStackTrace();
+            }
+
             return null;
         }
     }
