@@ -246,7 +246,7 @@ public class Sentence {
     /**
      * Constructs a JSON object of the sentence containing the constructed raw sentence and
      * the constructed translated version.
-     * @return JSON object of format: {"raw": "geia sas", "translated": "γεια σας"}
+     * @return JSON object of format: {"non_translated": "geia sas", "translated": "γεια σας"}
      */
     public JSONObject toJSON(){
         StringBuilder raw = new StringBuilder();
@@ -266,7 +266,7 @@ public class Sentence {
         JSONObject jsonObject = new JSONObject();
 
         try {
-            jsonObject.put("raw", rawSentence);
+            jsonObject.put("non_translated", rawSentence);
             jsonObject.put("translated", translatedSentence);
         } catch (JSONException e) {
             System.err.println(e);
