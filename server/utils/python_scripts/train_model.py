@@ -73,15 +73,13 @@ print("Started Training")
 best_loss = None
 for epoch in range(1, epochs + 1):
 
-    print("Epoch {}/{}".format(epoch, epochs))
+    #print("Epoch {}/{}".format(epoch, epochs))
     model.train()
     train_loss = 0
     optim.zero_grad()
 
     for i, (sources, targets) in enumerate(train_loader):
-        print("\r[{}{}] Batch {}/{}".format(math.ceil((i + 1) / len(train_loader) * 40) * "=",
-                                            (40 - math.ceil((i + 1) / len(train_loader) * 40)) * " ", i + 1,
-                                            len(train_loader)), end="")
+        #print("\r[{}{}] Batch {}/{}".format(math.ceil((i + 1) / len(train_loader) * 40) * "=", (40 - math.ceil((i + 1) / len(train_loader) * 40)) * " ", i + 1, len(train_loader)), end="")
 
         sources, targets = sources.to(device), targets.to(device)
         optim.zero_grad()
@@ -118,7 +116,7 @@ for epoch in range(1, epochs + 1):
 
     epoch_train_loss = train_loss / train_batches
     epoch_val_loss = val_loss / val_batches
-    print("\nLoss: (train){} (val){}".format(epoch_train_loss, epoch_val_loss))
+    #print("\nLoss: (train){} (val){}".format(epoch_train_loss, epoch_val_loss))
     
 
 # =====Comparison with current best model=====
