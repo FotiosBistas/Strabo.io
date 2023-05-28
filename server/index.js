@@ -111,7 +111,7 @@ app.get('/Model', (req,res) => {
 
     if (latest) {
         // Send the most recent file
-        res.sendFile(path.join(SAVED_MODELS_DIRECTORY, latest));
+        res.sendFile(path.resolve(SAVED_MODELS_DIRECTORY, latest));
         log('Sending latest model: ' + latest);
     } else {
         res.status(404).send('No models found.');
