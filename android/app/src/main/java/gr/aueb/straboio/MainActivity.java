@@ -19,11 +19,12 @@ import android.text.SpannableString;
 import android.text.style.StyleSpan;
 import android.view.View;
 import android.view.accessibility.AccessibilityManager;
+import android.view.inputmethod.InputMethodInfo;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -34,10 +35,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.security.KeyManagementException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
@@ -45,7 +44,6 @@ import java.security.NoSuchAlgorithmException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
-import java.security.cert.X509Certificate;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -57,16 +55,18 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
 
 import gr.aueb.straboio.keyboard.CaptureTextService;
-import gr.aueb.straboio.keyboard.storage.CollectedDataManager;
+import gr.aueb.straboio.keyboard.StraboKeyboard;
 
 public class MainActivity extends AppCompatActivity {
 
     private Button trainingDataBtn;
     private Button checkForNewModelBtn;
+    private Button enableKeyboardBtn;
     private TextView dataCollectionStatusTextView;
     private TextView dataCollectionHelpTextView;
     private TextView currentModelText;
     private TextView lastTimeCheckedText;
+    private TextView enableKeyboardText;
 
     private ProgressDialog downloadProgressDialog;
 
@@ -85,7 +85,10 @@ public class MainActivity extends AppCompatActivity {
         dataCollectionHelpTextView = (TextView) findViewById(R.id.dataCollectionHelpTextView);
         currentModelText = (TextView) findViewById(R.id.currentModelText);
         lastTimeCheckedText = (TextView) findViewById(R.id.lastTimeCheckedText);
+        enableKeyboardBtn = (Button) findViewById(R.id.enableKeyboardBtn);
+        enableKeyboardText = (TextView) findViewById(R.id.enableKeyboardText);
 
+        updateEnableSelectionStatus();
         updateDataCollectionStatusText();
         setDataCollectionHelpText();
         updateCurrentModelText();
@@ -110,6 +113,56 @@ public class MainActivity extends AppCompatActivity {
                 loadLastTimeCheked();
             }
         });
+
+        enableKeyboardBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+
+                // Check if the custom keyboard is already enabled
+                boolean isCustomKeyboardEnabled = false;
+                for(InputMethodInfo im : imm.getEnabledInputMethodList()){
+                    if(im.getServiceName().equals(StraboKeyboard.getServiceName()))
+                        isCustomKeyboardEnabled = true;
+                }
+
+                if (isCustomKeyboardEnabled) {
+                    // The custom keyboard is already enabled, show it
+                    imm.showInputMethodPicker();
+                } else {
+                    // The custom keyboard is not enabled, prompt the user to enable it
+                    Intent intent = new Intent(Settings.ACTION_INPUT_METHOD_SETTINGS);
+                    startActivity(intent);
+                }
+            }
+        });
+    }
+
+    private void updateEnableSelectionStatus() {
+        if (isCustomKeyboardEnabled()) {
+            // The custom keyboard is already enabled,
+            enableKeyboardText.setText(Html.fromHtml(
+                    "Strabo.io <b>ENABLED</b> as input source."
+            ));
+            enableKeyboardBtn.setText(Html.fromHtml("<b>Select</b> Strabo.io Keyboard"));
+        } else {
+            // The custom keyboard is not enabled, prompt the user to enable it
+            enableKeyboardText.setText(Html.fromHtml(
+                    "Strabo.io <b>NOT ENABLED</b> as input source."
+            ));
+            enableKeyboardBtn.setText(Html.fromHtml("<b>Enable</b> Strabo.io Keyboard"));
+        }
+    }
+
+    private boolean isCustomKeyboardEnabled() {
+        InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+        // Check if the custom keyboard is already enabled
+        boolean isCustomKeyboardEnabled = false;
+        for(InputMethodInfo im : imm.getEnabledInputMethodList()){
+            if(im.getServiceName().equals(StraboKeyboard.getServiceName()))
+                isCustomKeyboardEnabled = true;
+        }
+        return isCustomKeyboardEnabled;
     }
 
     private void loadLastTimeCheked() {
@@ -135,6 +188,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        updateEnableSelectionStatus();
         updateDataCollectionStatusText();
         updateCurrentModelText();
         loadLastTimeCheked();

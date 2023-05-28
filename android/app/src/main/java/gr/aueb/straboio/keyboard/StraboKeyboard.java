@@ -401,6 +401,10 @@ public class StraboKeyboard extends InputMethodService implements KeyboardView.O
 
     }
 
+    public static String getServiceName(){
+        return "gr.aueb.straboio.keyboard.StraboKeyboard";
+    }
+
     private class CorrectTask extends AsyncTask<String, Void, Void> {
 
         private String transOutput = "";

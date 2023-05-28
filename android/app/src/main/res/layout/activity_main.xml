@@ -10,9 +10,29 @@
 
 
     <TextView
+        android:id="@+id/enableKeyboardText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="40dp"
+        android:layout_marginRight="40dp"
+        android:textAlignment="center"
+        android:text="Strabo.io is NOT enabled as an input method."
+        />
+
+    <Button
+        android:id="@+id/enableKeyboardBtn"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:layout_marginLeft="35dp"
+        android:layout_marginRight="35dp"
+        android:text="Enable Strabo.io keyboard" />
+
+    <TextView
         android:id="@+id/dataCollectionStatusTextView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
         android:layout_marginLeft="40dp"
         android:layout_marginRight="40dp"
         android:textAlignment="center"

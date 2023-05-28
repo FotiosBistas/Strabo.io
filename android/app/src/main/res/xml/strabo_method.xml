@@ -3,6 +3,6 @@
     <subtype
         android:label="English (US)"
         android:imeSubtypeLocale="en US"
-        android:imeSubtypeMode="keyboard"
+        android:imeSubtypeMode="straboio"
         />
 </input-method>
