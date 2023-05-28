@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.inputmethodservice.InputMethodService;
 import android.inputmethodservice.Keyboard;
 import android.inputmethodservice.KeyboardView;
@@ -75,6 +76,10 @@ public class StraboKeyboard extends InputMethodService implements KeyboardView.O
     private static final int LONG_PRESS_TIMEOUT = 600; // in milliseconds
 
     private LanguageModel translator = null;
+    // Translation Model stuff
+    private Module model;
+    private TexVectorizer texVectorizer;
+    private Model lstmodel;
     private StringBuilder transInput = new StringBuilder("");
     private Sentence sentence;
 
@@ -120,6 +125,22 @@ public class StraboKeyboard extends InputMethodService implements KeyboardView.O
         }
     };
 
+    // Handle inter-service messaging:
+    private BroadcastReceiver modelChangedReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            // Handle NOTIFY_VIEW_TEXT_SELECTION_CHANGED:
+            try {
+                System.out.println("Changing model...");
+                loadModel();
+                System.out.println("Model changed successfully!");
+            } catch (IOException e) {
+                e.printStackTrace();
+                Log.d("ERR_LOAD_MODULE", "onCreate: " + e.getMessage());
+            }
+        }
+    };
+
     public static String getAssetFilePath(Context context, String assetName) throws IOException {
         File file = new File(context.getFilesDir(), assetName);
         if (file.exists() && file.length() > 0) {
@@ -138,18 +159,44 @@ public class StraboKeyboard extends InputMethodService implements KeyboardView.O
         }
     }
 
+    private void loadModel() throws IOException {
+
+        SharedPreferences sharedPreferences = getSharedPreferences(getResources().getString(R.string.APP_SHARED_PREFS), Context.MODE_PRIVATE);
+        final String CURRENT_MODEL = sharedPreferences.getString(getResources().getString(R.string.MODEL_CURRENT_NAME_SHARED_PREF), "none.pt");
+
+        try{
+            File dir = new File(
+                    getFilesDir(),
+                    getResources().getString(R.string.MODEL_DIRECTORY)
+            );
+
+            File currModel = new File(dir, CURRENT_MODEL);
+
+            model = Module.load(
+                    currModel.getAbsolutePath()
+            );
+            System.out.println("LATEST MODEL LOADED.");
+        } catch(Exception e){
+            // The user has never pulled a new model from the server. Load default:
+            model = Module.load(
+                    getAssetFilePath(this, "SCR_OPT_LSTM_LM_50000_char_120_32_512.pt")
+            );
+        }
+
+        texVectorizer = new TexVectorizer(
+                TexVectorizer.Mode.CHAR,
+                getAssetFilePath(this, "vocab_50000_char_120_128_1024.csv")
+        );
+        lstmodel = new Model(model, 120, 32, 512, 120);
+        translator = new LanguageModelLSTM(lstmodel, texVectorizer, 3);
+    }
+
     @Override
     public void onCreate() {
         super.onCreate();
         // Setup model.
         try {
-            Module model = Module.load(getAssetFilePath(this, "SCR_OPT_LSTM_LM_50000_char_120_32_512.pt"));
-            TexVectorizer texVectorizer = new TexVectorizer(
-                    TexVectorizer.Mode.CHAR,
-                    getAssetFilePath(this, "vocab_50000_char_120_128_1024.csv")
-            );
-            Model lstmodel = new Model(model, 120, 32, 512, 120);
-            translator = new LanguageModelLSTM(lstmodel, texVectorizer, 3);
+            loadModel();
         } catch (IOException e) {
             Log.d("ERR_LOAD_MODULE", "onCreate: " + e.getMessage());
         }
@@ -157,8 +204,19 @@ public class StraboKeyboard extends InputMethodService implements KeyboardView.O
         // Setup message receiver:
         LocalBroadcastManager.getInstance(this).registerReceiver(
                 receiver,
-                new IntentFilter("gr.aueb.straboio.NOTIFY_VIEW_TEXT_SELECTION_CHANGED")
+                new IntentFilter(
+                        getResources().getString(R.string.ACTION_VIEW_TEXT_SELECTION_CHANGED)
+                )
         );
+
+        // Setup message receiver:
+        LocalBroadcastManager.getInstance(this).registerReceiver(
+                modelChangedReceiver,
+                new IntentFilter(
+                        getResources().getString(R.string.ACTION_LATEST_MODEL_CHANGED)
+                )
+        );
+
         // Setup training data collector buffer.
         sentence = new Sentence();
     }

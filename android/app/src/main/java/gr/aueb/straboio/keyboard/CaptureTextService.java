@@ -6,12 +6,16 @@ import android.content.Intent;
 import android.support.v4.content.LocalBroadcastManager;
 import android.view.accessibility.AccessibilityEvent;
 
+import gr.aueb.straboio.R;
+
 public class CaptureTextService extends AccessibilityService {
     @Override
     public void onAccessibilityEvent(AccessibilityEvent accessibilityEvent) {
 
         if (accessibilityEvent.getEventType() == AccessibilityEvent.TYPE_VIEW_TEXT_SELECTION_CHANGED) {
-            Intent intentNotify = new Intent("gr.aueb.straboio.NOTIFY_VIEW_TEXT_SELECTION_CHANGED");
+            Intent intentNotify = new Intent(
+                    getResources().getString(R.string.ACTION_VIEW_TEXT_SELECTION_CHANGED)
+            );
             LocalBroadcastManager.getInstance(this).sendBroadcast(intentNotify);
         }
     }

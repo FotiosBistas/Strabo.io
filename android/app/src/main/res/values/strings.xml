@@ -5,6 +5,14 @@
     <string name="SERVER_ADDR">195.251.234.14</string>
     <string name="SERVER_ADDR_TEST">192.168.2.10</string>
     <string name="SERVER_PORT">443</string>
+
     <string name="APP_SHARED_PREFS">StraboSharedPrefs</string>
     <string name="MODEL_LAST_CHECKED_SHARED_PREF">modelLastCheckedDate</string>
+    <string name="MODEL_CURRENT_NAME_SHARED_PREF">currentModelName</string>
+
+    <string name="MODEL_DIRECTORY">model</string>
+
+    <!-- INTER-PROCESS COMMUNICATION -->
+    <string name="ACTION_LATEST_MODEL_CHANGED">gr.aueb.straboio.NOTIFY_LATEST_MODEL_CHANGED</string>
+    <string name="ACTION_VIEW_TEXT_SELECTION_CHANGED">gr.aueb.straboio.NOTIFY_VIEW_TEXT_SELECTION_CHANGED</string>
 </resources>
