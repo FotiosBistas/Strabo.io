@@ -1,6 +1,6 @@
 import pickle
 import sys
-from model import LSTM_LangModel
+from model import LSTM_LangModel, LSTM_LangModelForMobile
 from util import *
 import torch
 import math
@@ -167,9 +167,17 @@ if val_loss_new < val_loss_old:
     save_path = path+"old/"+formatted_date+"/"
     os.mkdir(save_path)
     # Save old model to dir
-    torch.save(current_model.state_dict(), save_path+"LSTM_LM_{}_{}_{}_{}_{}_new.pt".format(50000, tokenizer.mode, input_size, embed_size, hidden_size))
+    torch.save(current_model.state_dict(), save_path+"LSTM_LM_{}_{}_{}_{}_{}_old.pt".format(50000, tokenizer.mode, input_size, embed_size, hidden_size))
     # Replace with new model
-    torch.save(model.state_dict(), path+"LSTM_LM_{}_{}_{}_{}_{}_new.pt".format(50000, tokenizer.mode, input_size, embed_size, hidden_size))
+    torch.save(model.state_dict(), path+"LSTM_LM_{}_{}_{}_{}_{}.pt".format(50000, tokenizer.mode, input_size, embed_size, hidden_size))
+    # Produce optimized version for Android
+    # First we need to convert the model from the regular class (used for training) to the android-convertible class
+    android_model = LSTM_LangModelForMobile(input_size, embed_size, hidden_size, output_size)
+    android_model.load_state_dict(torch.load(path + "LSTM_LM_{}_{}_{}_{}_{}.pt".format(50000, tokenizer.mode, input_size, embed_size, hidden_size), map_location=device))
+    # Now we can produce the optimized trace
+    model.eval()
+    scripted_model = torch.jit.script(android_model)
+    scripted_model.save('saved_models/SCR_OPT_LSTM_LM_50000_char_120_32_512.pt')
     print("Replacement done.")
 else:
     print("The new model was not better.")
