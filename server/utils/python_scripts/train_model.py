@@ -10,9 +10,24 @@ from datetime import datetime
 from torch.utils.data import DataLoader
 from torch.optim import Adam
 import json
-import numpy as np
 
+import os
+import glob
 
+def mostRecetntModel(directory_path):
+
+    # Search for .pt files in the specified directory
+    file_list = glob.glob(os.path.join(directory_path, '*.pt'))
+
+    # Sort the file list based on modification time in descending order
+    file_list.sort(key=lambda x: os.path.getmtime(x), reverse=True)
+
+    if file_list:
+        # Get the path of the most recent .pt file
+        return file_list[0]
+    else:
+        return None
+    
 # Path to save the model / load previous models
 path = "utils/python_scripts/saved_models/"
 # Collect sentences in Greek for training
@@ -139,8 +154,10 @@ with torch.no_grad():
 
 
 # Load the current best model
+curr_model_weights = mostRecetntModel(path)
+print("Loading current best model: {}".format(curr_model_weights))
 current_model = LSTM_LangModel(input_size, embed_size, hidden_size, output_size).to(device)
-current_model.load_state_dict(torch.load(path + "LSTM_LM_50000_char_120_32_512.pt", map_location=device))
+current_model.load_state_dict(torch.load(curr_model_weights, map_location=device))
 # Testing old model
 with torch.no_grad():
         current_model.eval()
@@ -160,24 +177,26 @@ with torch.no_grad():
 
 
 if val_loss_new < val_loss_old: 
-    print("The new model is better. Replacing the old model..")
+    print("The new model is better. Adding new model..")
     # Get current date
     today = datetime.today()
-    formatted_date = today.strftime('%d/%m/%Y')
-    save_path = path+"old/"+formatted_date+"/"
-    os.mkdir(save_path)
-    # Save old model to dir
-    torch.save(current_model.state_dict(), save_path+"LSTM_LM_{}_{}_{}_{}_{}_old.pt".format(50000, tokenizer.mode, input_size, embed_size, hidden_size))
-    # Replace with new model
-    torch.save(model.state_dict(), path+"LSTM_LM_{}_{}_{}_{}_{}.pt".format(50000, tokenizer.mode, input_size, embed_size, hidden_size))
+    formatted_date = today.strftime('%Y_%m_%d_%H_%M_%S')
+    name = "LM_{}.pt".format(formatted_date)
+    
+    # Add new model
+    torch.save(model.state_dict(), path + name)
+    
     # Produce optimized version for Android
+   
     # First we need to convert the model from the regular class (used for training) to the android-convertible class
     android_model = LSTM_LangModelForMobile(input_size, embed_size, hidden_size, output_size)
-    android_model.load_state_dict(torch.load(path + "LSTM_LM_{}_{}_{}_{}_{}.pt".format(50000, tokenizer.mode, input_size, embed_size, hidden_size), map_location=device))
-    # Now we can produce the optimized trace
+    android_model.load_state_dict(torch.load(path + name, map_location=device))
+    
+    # Produce the optimized version:
+    print("Producing optimized version for Android..")
     model.eval()
     scripted_model = torch.jit.script(android_model)
-    scripted_model.save('saved_models/SCR_OPT_LSTM_LM_50000_char_120_32_512.pt')
-    print("Replacement done.")
+    scripted_model.save(path+'optimized/'+'OPT_{}'.format(name))
+    print("Optimization done.")
 else:
     print("The new model was not better.")

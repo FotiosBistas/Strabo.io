@@ -22,7 +22,7 @@ class LSTM_LangModel(nn.Module):
 class LSTM_LangModelForMobile(nn.Module):
     
     def __init__(self, input_size, embed_size, hidden_size, output_size):
-        super(LSTM_LangModel, self).__init__()
+        super(LSTM_LangModelForMobile, self).__init__()
         self.hidden_size = hidden_size
 
         self.embed = nn.Embedding(input_size, embed_size, padding_idx=0)
