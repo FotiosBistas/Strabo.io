@@ -43,7 +43,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // parse application/json content from body
 app.use(express.json( {limit:'10mb'})) ;
 
-const SAVED_MODELS_DIRECTORY = './utils/python_scripts/saved_models';
+const SAVED_MODELS_DIRECTORY = './utils/python_scripts/saved_models/optimized';
 
 /**
  * Returns the file name of the latest model.
