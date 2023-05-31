@@ -14,7 +14,7 @@ import numpy as np
 
 
 # Path to save the model / load previous models
-path = "utils\\python_scripts\\saved_models\\"
+path = "utils/python_scripts/saved_models/"
 # Collect sentences in Greek for training
 filename = sys.argv[1]
 
