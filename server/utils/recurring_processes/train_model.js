@@ -1,9 +1,12 @@
-const {PythonShell} = require('python-shell'); 
+const {PythonShell} = require('python-shell');
+const fs = require('fs'); 
 const schedule = require('node-schedule'); 
+process.env.PYTHONIOENCODING = 'UTF-8';
 
 const path = require('path');
 const mongo_directory = path.dirname(path.dirname(__dirname));
 const mongo_db_interactions = require( mongo_directory + "/mongo_db_api/mongo.js");
+const batch_processing = require(mongo_directory + "/utils/batch_processing.js")
 
 function log(text){
     let time = new Date(); 
@@ -20,12 +23,22 @@ async function runTrainScript(){
     // Retrieve the parallel data from mongodb
     const results = await mongo_db_interactions.retrieveData("UserData", "Translated_and_non", {}, { translated: 1, _id: 0 }, {});
     
-    const translatedList = [];
+    let translatedList = [];
     // Load data into lists
     results.forEach(item => {
         translatedList.push(item.translated);
     });
 
+    //Decrypt
+    translatedList = batch_processing.decryptData(translatedList);
+    //Turn struct to list
+    translatedList = Object.values(translatedList);
+
+
+    // Write list to temp file
+    fs.writeFileSync('temp.txt', JSON.stringify(translatedList), 'utf8'); 
+
+    /*
     // Split to 2000-item batches 
     const batchSize = 2000;
     const translatedBatches = [];
@@ -35,23 +48,20 @@ async function runTrainScript(){
         const translatedBatch = translatedList.slice(i, i + batchSize);
         translatedBatches.push(translatedBatch);
     }
-    log("Received data from database running python train script");
+     */
+    // Run training script
+    let options = {
+        mode: 'text',
+        pythonOptions: ['-u'], //print results 
+        scriptPath: './utils/python_scripts', 
+        args:['temp.txt']
+    }
 
-    // Run training for each batch
-    //for (let i = 0; i < translatedBatches.length; i++) {
-
-    //    let options = {
-    //        mode: 'text', 
-    //        pythonOptions: ['-u'], //print results 
-    //        scriptPath: './utils/python_scripts', 
-    //        args:[translatedBatches[i]] //TODO add necessary enviroment variables these can be the batches 
-    //    }
-
-    //    PythonShell.run('train_model.py', options).then(messages => {
-    //        console.log(JSON.stringify(messages));
-    //        console.log('finished');
-    //    });
-    //}   
+    //PythonShell.run('train_model.py', options).then(messages => {
+    PythonShell.run('train_model.py', options).then(messages => {
+        console.log(JSON.stringify(messages));
+        console.log('finished');
+    });
 }
 
 
