@@ -1,12 +1,17 @@
 "use strict"
-const express = require('express')
-const express_rate_limit = require('express-rate-limit')
+const express = require('express');
+const express_rate_limit = require('express-rate-limit');
 const https = require('https');
-const app = express();
 const morgan = require('morgan');
 const fs = require('fs');
 const path = require('path');
 
+const PORT = 443; // HTTPS port
+
+const credentials = { 
+  key: fs.readFileSync('./ssl/key.pem'), 
+  cert: fs.readFileSync('./ssl/cert.pem')
+};
 
 require("dotenv").config(); 
 require('./utils/process_keys');
@@ -23,12 +28,10 @@ function log(text){
     let time = new Date(); 
     console.log("[" + time.toLocaleTimeString() + "] " + " " + text)
 }
-let server = null 
-//server = https.createServer(app).listen(3000, () =>{
-//    log("Listening on port 3000 https server")
-//})
 
+let server = null;
 
+const app = express();
 
 app.use(express.static('public'));
 
@@ -40,20 +43,81 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // parse application/json content from body
 app.use(express.json( {limit:'10mb'})) ;
 
+const SAVED_MODELS_DIRECTORY = './utils/python_scripts/saved_models';
 
-if(!server){
-    log("Could not create https server")
-    server = app.listen(999, async () =>{
-        await mongoDBinteractions.connectToDatabase(); 
-        log("Listening on port 3000 http server")
-    })
-}
+/**
+ * Returns the file name of the latest model.
+ */
+app.get('/peek', function(req, res) {
+    fs.readdir(SAVED_MODELS_DIRECTORY, function(err, files) {
+        if (err) {
+            res.status(500).send('INTERNAL SERVER ERROR');
+            log(err);
+            return;
+        }
+
+        let latest; // file name of the latest model
+        let latestTime = 0;
+
+        files.forEach(function(fileName) {
+            if (path.extname(fileName) === '.pt') {
+                const filePath = path.join(SAVED_MODELS_DIRECTORY, fileName);
+                const fileTime = fs.statSync(filePath).mtime.getTime();
+
+                if (!latest || fileTime > latestTime) {
+                    latest = fileName;
+                    latestTime = fileTime;
+                }
+            }
+        });
+
+        if (latest) {
+            res.json({'model_name': latest});
+            log('Latest model: ' + latest);
+        } else {
+            res.status(404).send('No models found.');
+            log('No models found.');
+        }
+    });
+});
+
 
 /**
  * User will request for the model 
+ * Sends the latest model to the user.
  */
 app.get('/Model', (req,res) => {
-    
+  fs.readdir(SAVED_MODELS_DIRECTORY, function(err, files) {
+    if (err) {
+        res.status(500).send('INTERNAL SERVER ERROR');
+        log(err);
+        return;
+    }
+
+    let latest; // file name of the latest model
+    let latestTime = 0;
+
+    files.forEach(function(fileName) {
+        if (path.extname(fileName) === '.pt') {
+            const filePath = path.join(SAVED_MODELS_DIRECTORY, fileName);
+            const fileTime = fs.statSync(filePath).mtime.getTime();
+
+            if (!latest || fileTime > latestTime) {
+                latest = fileName;
+                latestTime = fileTime;
+            }
+        }
+    });
+
+    if (latest) {
+        // Send the most recent file
+        res.sendFile(path.resolve(SAVED_MODELS_DIRECTORY, latest));
+        log('Sending latest model: ' + latest);
+    } else {
+        res.status(404).send('No models found.');
+        log('No models found.');
+    }
+  });
 })
 
 const accessLogStream = fs.createWriteStream(path.join(__dirname, 'access.log'), { flags: 'a' });
@@ -93,11 +157,11 @@ app.use(blockSpammers);
 app.post('/Batch',batch_limiter,async (request,result) =>{
     log("Received batch in http server"); 
     const {batch} = request.body;
- 
+
     //batch should be two arrays the translated and non translated data
 
     // do something with the data
-    log({batch});
+    log(JSON.stringify(batch));
     try{
         let database_structs = await batch_utilities.processBatch(batch);
         await mongoDBinteractions.addStructToDatabase(database_structs);
@@ -120,3 +184,10 @@ process.on('SIGINT',async () => {
       process.exit(0);
     });
 });
+
+if(!server){
+  https.createServer(credentials, app).listen(PORT, async () => {
+    await mongoDBinteractions.connectToDatabase(); 
+    log(`Listening on port ${PORT} https server`);
+  })
+}
