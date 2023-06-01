@@ -134,3 +134,6 @@ passphrase.txt
 encryptedkey.txt
 hashed_passphrase.txt
 ssl/
+
+#Docker
+Dockerfile
