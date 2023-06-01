@@ -22,7 +22,12 @@ async function runTrainScript(){
     //TODO modify to run on batches do not call the script with 10000 samples 
     // Retrieve the parallel data from mongodb
     const results = await mongo_db_interactions.retrieveData("UserData", "Translated_and_non", {}, { translated: 1, _id: 0 }, {});
-    
+
+
+	if(results.length == 0){
+		log("Received empty data from database. Stopping model training process"); 
+		return; 
+	}
     let translatedList = [];
     // Load data into lists
     results.forEach(item => {
