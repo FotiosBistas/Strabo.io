@@ -67,6 +67,7 @@ public class StraboKeyboard extends InputMethodService implements KeyboardView.O
 
     private boolean isCaps = false;
     private boolean isEnglish = true;
+    private boolean isSymbols = false;
     private CustomKeyMapper keymapper = new CustomKeyMapper();
 
     private Handler mHandler = new Handler();
@@ -274,14 +275,28 @@ public class StraboKeyboard extends InputMethodService implements KeyboardView.O
                 break;
             case -999:
                 isEnglish = !isEnglish;
+                isSymbols = false;
+                for(Keyboard.Key k: keyboard.getKeys())
+                    if(k.codes[0] == -888)
+                        k.label = ";!?";
                 updateAlphabetOfKeyboard();
                 break;
+            case -888:
+                isSymbols = !isSymbols;
+                switchToSymbols();
+                break;
             default:
-                char code = (char) i;
-                if(Character.isLetter(code) && isCaps)
-                    code = Character.toUpperCase(code);
+                String characterToOutput;
+                char code = (char) i;;
+                if(!isSymbols){
+                    if(Character.isLetter(code) && isCaps)
+                        code = Character.toUpperCase(code);
 
-                String characterToOutput = String.valueOf((isEnglish) ? keymapper.toEN(code) : keymapper.toGR(code));
+                    characterToOutput = String.valueOf((isEnglish) ? keymapper.toEN(code) : keymapper.toGR(code));
+                } else {
+                    characterToOutput = String.valueOf(keymapper.toSYMBOL(i));
+                }
+
                 iconn.commitText(characterToOutput, 1);
                 if (wasLongPressed) {
                     iconn.deleteSurroundingText(1, 0);
@@ -331,7 +346,7 @@ public class StraboKeyboard extends InputMethodService implements KeyboardView.O
                 if (key.codes[0] == -999) {
                     key.label = "en";
                 }
-                if (key.label != null && (Character.isLetter(key.codes[0]))) {
+                if (key.label != null && keymapper.isSwitchable(key.codes[0])) {
                     key.label = ((Character) keymapper.toEN(key.codes[0])).toString();
                 }
             } else {
@@ -339,7 +354,7 @@ public class StraboKeyboard extends InputMethodService implements KeyboardView.O
                 if (key.codes[0] == -999) {
                     key.label = "ελ";
                 }
-                if (key.label != null && Character.isLetter(key.codes[0])) {
+                if (key.label != null && keymapper.isSwitchable(key.codes[0])) {
                     key.label = ((Character) keymapper.toGR(key.codes[0])).toString();
                 }
             }
@@ -347,6 +362,27 @@ public class StraboKeyboard extends InputMethodService implements KeyboardView.O
         // Redraw the keyboard to update the key labels
         kview.invalidateAllKeys();
 
+    }
+
+    private void switchToSymbols() {
+        if(isSymbols){
+            for(Keyboard.Key key : keyboard.getKeys()){
+                if(key.codes[0] == -888){
+                    key.label = "ab";
+                }
+                if (key.label != null && keymapper.isSwitchable(key.codes[0])) {
+                    key.label = ((Character) keymapper.toSYMBOL(key.codes[0])).toString();
+                }
+            }
+            // Redraw the keyboard to update the key labels
+            kview.invalidateAllKeys();
+        } else {
+            for(Keyboard.Key key : keyboard.getKeys())
+                if(key.codes[0] == -888)
+                    key.label = ";!?";
+            // Switch back to the alphabet
+            updateAlphabetOfKeyboard();
+        }
     }
 
     private void playSoundEffect(int i) {
