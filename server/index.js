@@ -16,7 +16,6 @@ const credentials = {
 require("dotenv").config(); 
 require('./utils/process_keys');
 const spammer = require('./utils/recurring_processes/block_spammer_ips')
-require('./utils/recurring_processes/train_model.js');
 require('./utils/recurring_processes/produce_dictionary.js');
 require('./utils/spam_data_detection.js');
 const mongoDBinteractions = require('./mongo_db_api/mongo.js'); 
@@ -186,7 +185,7 @@ process.on('SIGINT',async () => {
 });
 
 if(!server){
-  https.createServer(credentials, app).listen(PORT, async () => {
+  server = https.createServer(credentials, app).listen(PORT, async () => {
     await mongoDBinteractions.connectToDatabase(); 
     log(`Listening on port ${PORT} https server`);
   })
