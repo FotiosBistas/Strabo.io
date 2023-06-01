@@ -323,12 +323,6 @@ public class StraboKeyboard extends InputMethodService implements KeyboardView.O
         return currentCursorPosition;
     }
 
-    private String getOuputedText(){
-        InputConnection inputConnection = getCurrentInputConnection();
-        String ouputedText = inputConnection.getExtractedText(new ExtractedTextRequest(), 0).text.toString();
-        return (ouputedText != null) ? ouputedText : "";
-    }
-
     private void updateAlphabetOfKeyboard() {
         for (Keyboard.Key key : keyboard.getKeys()) {
             if (isEnglish) {
