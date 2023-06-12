@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    tools:context=".MainActivity">
+
+
+    <TextView
+        android:id="@+id/enableKeyboardText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="40dp"
+        android:layout_marginRight="40dp"
+        android:textAlignment="center"
+        android:text="Strabo.io is NOT enabled as an input method."
+        />
+
+    <Button
+        android:id="@+id/enableKeyboardBtn"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:layout_marginLeft="35dp"
+        android:layout_marginRight="35dp"
+        android:text="Enable Strabo.io keyboard" />
+
+    <TextView
+        android:id="@+id/dataCollectionStatusTextView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:layout_marginLeft="40dp"
+        android:layout_marginRight="40dp"
+        android:textAlignment="center"
+        android:text="Training data is NOT being collected."
+        />
+
+    <Button
+        android:id="@+id/trainingDataBtn"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:layout_marginLeft="35dp"
+        android:layout_marginRight="35dp"
+        android:text="Allow Training Data Collection" />
+
+    <TextView
+        android:id="@+id/dataCollectionHelpTextView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="40dp"
+        android:layout_marginRight="40dp"
+        android:textStyle="italic"
+        android:layout_marginTop="10dp"
+        android:text=""
+        />
+
+    <Button
+        android:id="@+id/checkForNewModelBtn"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="35dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginRight="35dp"
+        android:backgroundTint="@color/purple_500"
+        android:text="Check for new translation model"
+        android:textColor="@color/white" />
+
+    <TextView
+        android:id="@+id/lastTimeCheckedText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="40dp"
+        android:layout_marginRight="40dp"
+        android:textStyle="italic"
+        android:textAlignment="center"
+        android:layout_marginTop="10dp"
+        android:text="Currently on model:"
+        />
+
+    <TextView
+        android:id="@+id/currentModelText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="40dp"
+        android:layout_marginRight="40dp"
+        android:textStyle="italic"
+        android:textAlignment="center"
+        android:layout_marginTop="10dp"
+        android:text="Currently on model XX.XX.XX"
+        />
+
+
+</LinearLayout>
